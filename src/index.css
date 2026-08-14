@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Righteous&display=swap');
 @import 'tailwindcss';
 
 /*
@@ -25,8 +24,14 @@
   --color-on-destructive: #000000;
   --color-ring: #ffffff;
 
-  --font-display: 'Righteous', ui-sans-serif, system-ui, sans-serif;
-  --font-sans: 'Poppins', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  /*
+    Righteous and Poppins are linked from index.html. Where that link cannot
+    load — a strict CSP, an offline viewer — the stack below is the intended
+    second choice, not an accident: geometric-ish faces that keep the display
+    voice, then the platform UI face. Never let it fall through to Arial.
+  */
+  --font-display: 'Righteous', 'Avenir Next', Futura, 'Trebuchet MS', system-ui, sans-serif;
+  --font-sans: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
   --animate-rise: rise 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-bar: bar 0.9s ease-in-out infinite alternate;

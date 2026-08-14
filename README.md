@@ -26,6 +26,19 @@ npm run build    # üretim derlemesi
 npm run preview  # derlemeyi yerelde sun
 ```
 
+## Tek dosyalık sürüm
+
+Uygulamanın tamamı (CSS + JS dahil) tek bir HTML dosyasına gömülebilir — sunucu istemez, dosyayı açman yeter:
+
+```bash
+npm run build:single             # dist-single/index.html
+node scripts/make-artifact.mjs   # artifact/makromusic.html
+```
+
+Bu sürüm yol tabanlı yönlendirme yerine hash yönlendirmesi kullanır (`#/kesfet`), çünkü statik bir dosyada bilinmeyen yolları `index.html`'e çeviren sunucu yoktur.
+
+`scripts/make-artifact.mjs` sarmalayıcı etiketleri ayıklar ve şunları doğrular: dış istek kalmamış, JS paketi gerçekten gömülmüş, `#root` yerinde, boyut sınırın altında. Bu kontroller olmasa paket sessizce düşebiliyor ve geriye boş bir sayfa kalıyor.
+
 ## Uyum skoru nasıl hesaplanıyor
 
 `src/lib/match.ts` üç sinyali harmanlar:
@@ -50,7 +63,7 @@ Ham örtüşme yakın zevklerde bile ~0.7'yi geçmediği için sonuç 42–99 ba
 
 Uygulama hiç görsel dosyası taşımaz ve avatar için ağ isteği yapmaz. Her avatar ve kapak, varlığın `id`'sinden türetilen deterministik bir gradyandır (`src/lib/visual.ts`) — aynı kişi her zaman aynı görünür.
 
-Tek dış bağımlılık Google Fonts (Poppins + Righteous). Erişilemezse sistem yazı tipine düşer, düzen bozulmaz.
+Tek dış bağımlılık Google Fonts (Poppins + Righteous), `index.html` içinden bağlanır. Erişilemediğinde `src/index.css` içindeki yığın devreye girer: Avenir Next / Futura / Trebuchet, sonra platform arayüz fontu — kaza eseri Arial değil, seçilmiş bir ikinci tercih.
 
 ## Tasarım sistemi
 
