@@ -5,10 +5,12 @@ import { CompatRing } from './CompatRing'
 import { ME, person } from '@/data/people'
 import { compatibility } from '@/lib/match'
 import { useSocial } from '@/state/SocialContext'
+import { useProfile } from '@/state/ProfileContext'
 
 /** Shown when a like turns mutual — the payoff moment of the whole app. */
 export function MatchCelebration() {
   const { celebrating, dismissCelebration } = useSocial()
+  const { photo } = useProfile()
   const closeRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
@@ -40,7 +42,7 @@ export function MatchCelebration() {
         </h2>
 
         <div className="my-6 flex items-center justify-center gap-3">
-          <Avatar seed={ME.id} name={ME.name} size="lg" />
+          <Avatar seed={ME.id} name={ME.name} size="lg" photo={photo} />
           <CompatRing score={match.score} size={72} />
           <Avatar seed={other.id} name={other.name} size="lg" />
         </div>

@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { CalendarDays, Compass, MessageCircle, User } from 'lucide-react'
+import { CalendarDays, Compass, Disc3, MessageCircle, User } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { MiniPlayer } from './MiniPlayer'
 import { MatchCelebration } from './MatchCelebration'
@@ -13,6 +13,7 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { to: '/kesfet', label: 'Keşfet', icon: Compass },
+  { to: '/muzik', label: 'Müzik', icon: Disc3 },
   { to: '/sohbetler', label: 'Sohbetler', icon: MessageCircle },
   { to: '/etkinlikler', label: 'Etkinlikler', icon: CalendarDays },
   { to: '/profil', label: 'Profil', icon: User },
@@ -49,7 +50,7 @@ export function AppShell() {
 
       {/* Mobile bottom nav */}
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-card/95 backdrop-blur md:hidden">
-        <ul className="grid grid-cols-4">
+        <ul className="grid grid-cols-5">
           {NAV.map((item) => (
             <li key={item.to}>
               <TabLink item={item} badge={item.to === '/sohbetler' ? unreadCount : 0} />

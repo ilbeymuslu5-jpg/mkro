@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from '@/components/AppShell'
 import { Welcome } from '@/pages/Welcome'
 import { Discover } from '@/pages/Discover'
+import { Music } from '@/pages/Music'
 import { Chats } from '@/pages/Chats'
 import { ChatDetail } from '@/pages/ChatDetail'
 import { Events } from '@/pages/Events'
@@ -14,6 +15,7 @@ export default function App() {
       <Route path="/" element={<Welcome />} />
       <Route element={<AppShell />}>
         <Route path="/kesfet" element={<Discover />} />
+        <Route path="/muzik" element={<Music />} />
         <Route path="/sohbetler" element={<Chats />} />
         <Route path="/sohbetler/:personId" element={<ChatDetail />} />
         <Route path="/etkinlikler" element={<Events />} />

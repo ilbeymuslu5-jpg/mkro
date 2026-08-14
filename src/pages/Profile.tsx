@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Avatar, Artwork } from '@/components/Avatar'
 import { PageHeader } from '@/components/PageHeader'
+import { PhotoPicker } from '@/components/PhotoPicker'
 import { TrackRow } from '@/components/TrackRow'
 import { artist, GENRE_LABEL } from '@/data/catalog'
 import { ME, person } from '@/data/people'
@@ -15,15 +16,7 @@ export function Profile() {
       <PageHeader title="Profil" subtitle="Müzik pasaportun" />
 
       <section className="rounded-2xl border border-border/70 bg-card p-5">
-        <div className="flex items-center gap-4">
-          <Avatar seed={ME.id} name={ME.name} size="lg" online={ME.online} />
-          <div className="min-w-0 flex-1">
-            <h2 className="font-display text-xl leading-tight text-resilient">{ME.name}</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground text-resilient">
-              {ME.age} · {ME.city}
-            </p>
-          </div>
-        </div>
+        <PhotoPicker />
 
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground text-resilient">{ME.bio}</p>
 

@@ -5,6 +5,7 @@ import './index.css'
 import App from './App.tsx'
 import { PlayerProvider } from '@/state/PlayerContext'
 import { SocialProvider } from '@/state/SocialContext'
+import { ProfileProvider } from '@/state/ProfileContext'
 
 /*
   Path routing needs a server that rewrites unknown paths to index.html. The
@@ -16,11 +17,13 @@ const Router = import.meta.env.VITE_ROUTER === 'hash' ? HashRouter : BrowserRout
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Router>
-      <SocialProvider>
-        <PlayerProvider>
-          <App />
-        </PlayerProvider>
-      </SocialProvider>
+      <ProfileProvider>
+        <SocialProvider>
+          <PlayerProvider>
+            <App />
+          </PlayerProvider>
+        </SocialProvider>
+      </ProfileProvider>
     </Router>
   </StrictMode>,
 )
