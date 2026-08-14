@@ -1,0 +1,137 @@
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { ArrowLeft, Heart, MessageCircle, Sparkles } from 'lucide-react'
+import { Artwork, Avatar } from '@/components/Avatar'
+import { CompatRing } from '@/components/CompatRing'
+import { TrackRow } from '@/components/TrackRow'
+import { artist, GENRE_LABEL } from '@/data/catalog'
+import { ME, PEOPLE_BY_ID } from '@/data/people'
+import { compatibility } from '@/lib/match'
+import { useSocial } from '@/state/SocialContext'
+
+export function PersonProfile() {
+  const { personId = '' } = useParams()
+  const navigate = useNavigate()
+  const { matchedIds, like } = useSocial()
+
+  const other = PEOPLE_BY_ID.get(personId)
+  if (!other || other.id === ME.id) return <NotFound />
+
+  const match = compatibility(ME, other)
+  const isMatched = matchedIds.includes(other.id)
+  const sharedArtists = new Set(match.sharedArtistIds)
+  const sharedTracks = new Set(match.sharedTrackIds)
+
+  return (
+    <div className="space-y-8">
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        className="-ml-2 inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" aria-hidden="true" />
+        Geri
+      </button>
+
+      <section className="rounded-2xl border border-border/70 bg-card p-5">
+        {/* Identity row first, bio at full width below — same reason as Keşfet. */}
+        <div className="flex items-center gap-4">
+          <Avatar seed={other.id} name={other.name} size="lg" online={other.online} />
+          <div className="min-w-0 flex-1">
+            <h1 className="font-display text-xl leading-tight text-resilient">{other.name}</h1>
+            <p className="mt-0.5 text-sm text-muted-foreground text-resilient">
+              {other.age} · {other.city}
+            </p>
+          </div>
+          <CompatRing score={match.score} size={64} />
+        </div>
+
+        <p className="mt-4 text-sm leading-relaxed text-muted-foreground text-resilient">
+          {other.bio}
+        </p>
+
+        <div className="mt-4 flex items-start gap-2 rounded-xl bg-accent/10 px-3 py-2.5">
+          <Sparkles className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden="true" />
+          <p className="text-sm text-accent text-resilient">{match.headline}</p>
+        </div>
+
+        <div className="mt-4">
+          {isMatched ? (
+            <Link
+              to={`/sohbetler/${other.id}`}
+              className="flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-on-accent transition-transform duration-200 hover:scale-[1.02] active:scale-95"
+            >
+              <MessageCircle className="size-4" aria-hidden="true" />
+              Mesaj gönder
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => like(other.id)}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-on-accent transition-transform duration-200 hover:scale-[1.02] active:scale-95"
+            >
+              <Heart className="size-4" aria-hidden="true" />
+              Beğen
+            </button>
+          )}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="mb-3 font-display text-lg">En çok dinledikleri</h2>
+        <ul className="scrollbar-none -mx-4 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
+          {other.topArtistIds.map((id) => (
+            <li key={id} className="w-28 shrink-0">
+              <Artwork seed={id} label={artist(id).name} className="size-28" />
+              <p className="mt-2 truncate text-sm font-medium text-resilient">{artist(id).name}</p>
+              {sharedArtists.has(id) && <p className="text-xs text-accent">ortak</p>}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="mb-3 font-display text-lg">Şarkıları</h2>
+        <ul className="space-y-0.5">
+          {other.topTrackIds.map((id, index) => (
+            <li key={id}>
+              <TrackRow trackId={id} index={index} shared={sharedTracks.has(id)} />
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="mb-3 font-display text-lg">Türleri</h2>
+        <ul className="flex flex-wrap gap-1.5">
+          {other.genres.map((genre) => (
+            <li key={genre}>
+              <span
+                className={`inline-block rounded-full px-3 py-1.5 text-sm ${
+                  match.sharedGenres.includes(genre)
+                    ? 'bg-accent/15 text-accent'
+                    : 'bg-muted text-muted-foreground'
+                }`}
+              >
+                {GENRE_LABEL[genre]}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
+  )
+}
+
+function NotFound() {
+  return (
+    <div className="rounded-2xl border border-border/70 bg-card p-8 text-center">
+      <p className="font-display text-lg">Bu profil bulunamadı</p>
+      <Link
+        to="/kesfet"
+        className="mt-4 inline-block rounded-xl bg-muted px-4 py-2.5 text-sm font-medium transition-colors duration-200 hover:bg-muted/70"
+      >
+        Keşfet'e dön
+      </Link>
+    </div>
+  )
+}
