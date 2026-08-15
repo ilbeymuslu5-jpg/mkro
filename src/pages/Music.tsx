@@ -7,10 +7,14 @@ import { formatDuration, track, trackArtistName } from '@/data/catalog'
 import { person } from '@/data/people'
 import { popularTracks, recommendationsFor } from '@/lib/discovery'
 import { usePlayer } from '@/state/PlayerContext'
+import { useMe } from '@/state/AuthContext'
+import { useSocial } from '@/state/SocialContext'
 
 export function Music() {
-  const popular = popularTracks()
-  const suggestions = recommendationsFor().slice(0, 6)
+  const me = useMe()
+  const { visiblePeople } = useSocial()
+  const popular = popularTracks(me, { pool: visiblePeople })
+  const suggestions = recommendationsFor(me, visiblePeople).slice(0, 6)
 
   return (
     <div className="space-y-10">

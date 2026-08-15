@@ -4,16 +4,17 @@ import { Artwork, Avatar } from '@/components/Avatar'
 import { PageHeader } from '@/components/PageHeader'
 import { artist } from '@/data/catalog'
 import { EVENTS, formatEventDate, formatEventTime, type MusicEvent } from '@/data/events'
-import { ME, person } from '@/data/people'
+import { person } from '@/data/people'
 import { useSocial } from '@/state/SocialContext'
+import { useMe } from '@/state/AuthContext'
 
 /**
  * How high the event's line-up sits in your own top-artist list — 0 is your
  * favourite artist, Infinity means nothing on the bill is yours.
  */
-function bestRank(event: MusicEvent): number {
+function bestRank(event: MusicEvent, topArtistIds: string[]): number {
   const ranks = event.artistIds
-    .map((id) => ME.topArtistIds.indexOf(id))
+    .map((id) => topArtistIds.indexOf(id))
     .filter((index) => index >= 0)
   return ranks.length === 0 ? Number.POSITIVE_INFINITY : Math.min(...ranks)
 }
@@ -25,8 +26,9 @@ function bestRank(event: MusicEvent): number {
 const FEATURED_RANK_LIMIT = 4
 
 export function Events() {
+  const me = useMe()
   const sorted = [...EVENTS].sort((a, b) => {
-    const byRank = bestRank(a) - bestRank(b)
+    const byRank = bestRank(a, me.topArtistIds) - bestRank(b, me.topArtistIds)
     if (byRank !== 0) return byRank
     return new Date(a.date).getTime() - new Date(b.date).getTime()
   })
@@ -38,7 +40,7 @@ export function Events() {
       <ul className="space-y-3">
         {sorted.map((event) => (
           <li key={event.id}>
-            <EventCard event={event} />
+            <EventCard event={event} topArtistIds={me.topArtistIds} />
           </li>
         ))}
       </ul>
@@ -46,9 +48,9 @@ export function Events() {
   )
 }
 
-function EventCard({ event }: { event: MusicEvent }) {
+function EventCard({ event, topArtistIds }: { event: MusicEvent; topArtistIds: string[] }) {
   const { matchedIds } = useSocial()
-  const forYou = bestRank(event) < FEATURED_RANK_LIMIT
+  const forYou = bestRank(event, topArtistIds) < FEATURED_RANK_LIMIT
 
   // Only people you have actually matched with can be called "eşleşmen".
   const matchedGoing = event.attendeeIds.filter((id) => matchedIds.includes(id))
@@ -91,7 +93,7 @@ function EventCard({ event }: { event: MusicEvent }) {
               <li key={id}>
                 <span
                   className={`inline-block max-w-full truncate rounded-full px-2.5 py-1 text-xs ${
-                    ME.topArtistIds.includes(id)
+                    topArtistIds.includes(id)
                       ? 'bg-accent/15 text-accent'
                       : 'bg-muted text-muted-foreground'
                   }`}

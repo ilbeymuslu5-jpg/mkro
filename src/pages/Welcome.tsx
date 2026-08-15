@@ -33,7 +33,7 @@ export function Welcome() {
       <header className="flex items-center justify-between">
         <Wordmark />
         <Link
-          to="/kesfet"
+          to="/giris"
           className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-transform duration-200 hover:scale-[1.03] active:scale-95"
         >
           Başla
@@ -54,10 +54,10 @@ export function Welcome() {
 
         <div className="mt-10 flex flex-col items-center gap-4">
           <Link
-            to="/kesfet"
+            to="/giris"
             className="rounded-xl bg-accent px-7 py-3.5 text-sm font-semibold text-on-accent transition-transform duration-200 hover:scale-[1.03] active:scale-95"
           >
-            Keşfetmeye başla
+            Spotify ile bağlan
           </Link>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <CompatRing score={92} size={44} showCaption={false} />
@@ -81,7 +81,7 @@ export function Welcome() {
       <section className="mt-16 rounded-2xl border border-border/70 bg-card p-8 text-center md:mt-24">
         <h2 className="font-display text-2xl text-balance">Çalma listen zaten seni anlatıyor</h2>
         <Link
-          to="/kesfet"
+          to="/giris"
           className="mt-6 inline-block rounded-xl bg-accent px-7 py-3.5 text-sm font-semibold text-on-accent transition-transform duration-200 hover:scale-[1.03] active:scale-95"
         >
           Başla

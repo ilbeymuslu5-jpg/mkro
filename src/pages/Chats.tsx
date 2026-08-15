@@ -2,9 +2,10 @@ import { Link } from 'react-router-dom'
 import { Avatar } from '@/components/Avatar'
 import { PageHeader } from '@/components/PageHeader'
 import { track, trackArtistName } from '@/data/catalog'
-import { ME, person } from '@/data/people'
+import { person } from '@/data/people'
 import { compatibility } from '@/lib/match'
 import { useSocial } from '@/state/SocialContext'
+import { useMe } from '@/state/AuthContext'
 
 const RELATIVE = new Intl.RelativeTimeFormat('tr-TR', { numeric: 'auto' })
 
@@ -17,6 +18,7 @@ function relativeTime(timestamp: number): string {
 }
 
 export function Chats() {
+  const me = useMe()
   const { matchedIds, conversations } = useSocial()
 
   if (matchedIds.length === 0) {
@@ -48,7 +50,7 @@ export function Chats() {
           const other = person(id)
           const messages = conversations[id]?.messages ?? []
           const last = messages[messages.length - 1]
-          const score = compatibility(ME, other).score
+          const score = compatibility(me, other).score
 
           return (
             <li key={id}>

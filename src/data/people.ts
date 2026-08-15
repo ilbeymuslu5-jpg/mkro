@@ -15,19 +15,6 @@ export interface Person {
   online: boolean
 }
 
-export const ME: Person = {
-  id: 'me',
-  name: 'Sen',
-  age: 27,
-  city: 'İstanbul',
-  bio: 'Gece yarısı kulaklık takıp şehirde yürüyen tip. Plak biriktiriyorum.',
-  topArtistIds: ['a-radiohead', 'a-adamlar', 'a-tameimpala', 'a-bonobo', 'a-altin'],
-  topTrackIds: ['t-11', 't-6', 't-12', 't-14', 't-9'],
-  genres: ['indie', 'alternatif', 'elektronik', 'anadolu-rock'],
-  anthemTrackId: 't-11',
-  online: true,
-}
-
 export const PEOPLE: Person[] = [
   {
     id: 'p-1',
@@ -151,10 +138,7 @@ export const PEOPLE: Person[] = [
   },
 ]
 
-export const PEOPLE_BY_ID = new Map<string, Person>([
-  [ME.id, ME],
-  ...PEOPLE.map((p) => [p.id, p] as const),
-])
+export const PEOPLE_BY_ID = new Map<string, Person>(PEOPLE.map((p) => [p.id, p]))
 
 export function person(id: string): Person {
   const found = PEOPLE_BY_ID.get(id)

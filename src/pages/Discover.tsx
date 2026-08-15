@@ -5,18 +5,21 @@ import { CompatRing } from '@/components/CompatRing'
 import { TrackRow } from '@/components/TrackRow'
 import { PageHeader } from '@/components/PageHeader'
 import { artist, GENRE_LABEL } from '@/data/catalog'
-import { ME, person } from '@/data/people'
+import { person } from '@/data/people'
 import { compatibility } from '@/lib/match'
 import { useSocial } from '@/state/SocialContext'
+import { useMe } from '@/state/AuthContext'
+import { LiveMatch } from '@/components/LiveMatch'
 
 export function Discover() {
+  const me = useMe()
   const { queue, like, pass, resetQueue } = useSocial()
 
   if (queue.length === 0) return <EmptyQueue onReset={resetQueue} />
 
   const [currentId, ...rest] = queue
   const current = person(currentId)
-  const match = compatibility(ME, current)
+  const match = compatibility(me, current)
 
   return (
     <div>
@@ -24,6 +27,10 @@ export function Discover() {
         title="Keşfet"
         subtitle={`${queue.length} kişi müzik zevkinle eşleşiyor`}
       />
+
+      <div className="mb-5">
+        <LiveMatch />
+      </div>
 
       <div className="relative">
         {/* Peek at the next two cards so the deck reads as a stack. */}
@@ -142,6 +149,9 @@ function EmptyQueue({ onReset }: { onReset: () => void }) {
   return (
     <div>
       <PageHeader title="Keşfet" subtitle="Şimdilik bu kadar" />
+      <div className="mb-5">
+        <LiveMatch />
+      </div>
       <div className="rounded-2xl border border-border/70 bg-card p-8 text-center">
         <p className="font-display text-lg">Sıradaki herkesi gördün</p>
         <p className="mx-auto mt-2 max-w-sm text-sm text-balance text-muted-foreground">

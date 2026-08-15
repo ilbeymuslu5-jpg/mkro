@@ -2,15 +2,17 @@ import { Link } from 'react-router-dom'
 import { useEffect, useRef } from 'react'
 import { Avatar } from './Avatar'
 import { CompatRing } from './CompatRing'
-import { ME, person } from '@/data/people'
+import { person } from '@/data/people'
 import { compatibility } from '@/lib/match'
 import { useSocial } from '@/state/SocialContext'
 import { useProfile } from '@/state/ProfileContext'
+import { useMe } from '@/state/AuthContext'
 
 /** Shown when a like turns mutual — the payoff moment of the whole app. */
 export function MatchCelebration() {
   const { celebrating, dismissCelebration } = useSocial()
   const { photo } = useProfile()
+  const me = useMe()
   const closeRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
@@ -26,7 +28,7 @@ export function MatchCelebration() {
   if (!celebrating) return null
 
   const other = person(celebrating)
-  const match = compatibility(ME, other)
+  const match = compatibility(me, other)
 
   return (
     <div
@@ -42,7 +44,7 @@ export function MatchCelebration() {
         </h2>
 
         <div className="my-6 flex items-center justify-center gap-3">
-          <Avatar seed={ME.id} name={ME.name} size="lg" photo={photo} />
+          <Avatar seed="me" name={me.name} size="lg" photo={photo} />
           <CompatRing score={match.score} size={72} />
           <Avatar seed={other.id} name={other.name} size="lg" />
         </div>

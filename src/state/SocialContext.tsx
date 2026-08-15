@@ -1,15 +1,26 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { ME, PEOPLE, person } from '@/data/people'
+import { PEOPLE, person, type Person } from '@/data/people'
 import { compatibility, MUTUAL_LIKE_SCORE } from '@/lib/match'
+import { listeningNow } from '@/lib/discovery'
+import { useAuth } from './AuthContext'
 
 export interface Message {
   id: string
   from: 'me' | 'them'
-  /** Either a text message or a shared track — never both. */
+  /** A text message, a shared track, or a track generated for the pair. */
   text?: string
   trackId?: string
+  generated?: GeneratedTrack
   sentAt: number
+}
+
+export interface GeneratedTrack {
+  title: string
+  /** The two people's shared ground, shown as the prompt that produced it. */
+  basedOn: string
+  durationSec: number
+  mood: string
 }
 
 export interface Conversation {
@@ -19,22 +30,40 @@ export interface Conversation {
 
 type Verdict = 'liked' | 'passed'
 
+export type LiveMatchState =
+  | { phase: 'off' }
+  | { phase: 'searching' }
+  | { phase: 'found'; personId: string; trackId: string }
+  | { phase: 'empty'; trackId: string | null }
+
 interface SocialState {
-  /** People not yet swiped, best match first. */
+  /** People not yet swiped, best match first, blocked users removed. */
   queue: string[]
+  /** Everyone still visible to you. */
+  visiblePeople: Person[]
   verdicts: Record<string, Verdict>
   matchedIds: string[]
+  blockedIds: string[]
   conversations: Record<string, Conversation>
-  /** Set when a like turns into a mutual match, so the UI can celebrate it. */
   celebrating: string | null
+  liveMatch: LiveMatchState
   like: (personId: string) => void
   pass: (personId: string) => void
+  block: (personId: string) => void
+  unblock: (personId: string) => void
   dismissCelebration: () => void
-  sendMessage: (personId: string, payload: { text?: string; trackId?: string }) => void
+  sendMessage: (
+    personId: string,
+    payload: { text?: string; trackId?: string; generated?: GeneratedTrack },
+  ) => void
+  toggleLiveMatch: () => void
   resetQueue: () => void
+  resetAll: () => void
 }
 
 const SocialContext = createContext<SocialState | null>(null)
+
+const SEED_MATCHES = ['p-1', 'p-8']
 
 const SEED_CONVERSATIONS: Record<string, Conversation> = {
   'p-1': {
@@ -55,65 +84,151 @@ const SEED_CONVERSATIONS: Record<string, Conversation> = {
 }
 
 export function SocialProvider({ children }: { children: ReactNode }) {
+  const { me, nowPlaying } = useAuth()
+
   const [verdicts, setVerdicts] = useState<Record<string, Verdict>>({})
-  const [matchedIds, setMatchedIds] = useState<string[]>(['p-1', 'p-8'])
+  const [matchedIds, setMatchedIds] = useState<string[]>(SEED_MATCHES)
+  const [blockedIds, setBlockedIds] = useState<string[]>([])
   const [conversations, setConversations] = useState<Record<string, Conversation>>(SEED_CONVERSATIONS)
   const [celebrating, setCelebrating] = useState<string | null>(null)
+  const [liveMatch, setLiveMatch] = useState<LiveMatchState>({ phase: 'off' })
 
-  const queue = useMemo(
-    () =>
-      PEOPLE.filter((p) => !verdicts[p.id] && !matchedIds.includes(p.id))
-        .map((p) => ({ id: p.id, score: compatibility(ME, p).score }))
-        .sort((a, b) => b.score - a.score)
-        .map((entry) => entry.id),
-    [verdicts, matchedIds],
+  const visiblePeople = useMemo(
+    () => PEOPLE.filter((p) => !blockedIds.includes(p.id)),
+    [blockedIds],
   )
 
-  const like = useCallback((personId: string) => {
-    setVerdicts((current) => ({ ...current, [personId]: 'liked' }))
-    // High-affinity people like you back — that is the whole promise of the app.
-    const mutual = compatibility(ME, person(personId)).score >= MUTUAL_LIKE_SCORE
-    if (!mutual) return
-    setMatchedIds((current) => (current.includes(personId) ? current : [...current, personId]))
-    setCelebrating(personId)
-  }, [])
+  const queue = useMemo(() => {
+    if (!me) return []
+    return visiblePeople
+      .filter((p) => !verdicts[p.id] && !matchedIds.includes(p.id))
+      .map((p) => ({ id: p.id, score: compatibility(me, p).score }))
+      .sort((a, b) => b.score - a.score)
+      .map((entry) => entry.id)
+  }, [me, visiblePeople, verdicts, matchedIds])
+
+  // Live match: a short simulated search, then whoever is on the same track.
+  useEffect(() => {
+    if (liveMatch.phase !== 'searching') return
+
+    const timer = window.setTimeout(() => {
+      const trackId = nowPlaying?.trackId ?? null
+      if (!trackId) {
+        setLiveMatch({ phase: 'empty', trackId: null })
+        return
+      }
+      const candidates = listeningNow(trackId, visiblePeople)
+      setLiveMatch(
+        candidates.length > 0
+          ? { phase: 'found', personId: candidates[0].id, trackId }
+          : { phase: 'empty', trackId },
+      )
+    }, 1600)
+
+    return () => window.clearTimeout(timer)
+  }, [liveMatch.phase, nowPlaying, visiblePeople])
+
+  const like = useCallback(
+    (personId: string) => {
+      setVerdicts((current) => ({ ...current, [personId]: 'liked' }))
+      if (!me) return
+      // High-affinity people like you back — that is the whole promise of the app.
+      if (compatibility(me, person(personId)).score < MUTUAL_LIKE_SCORE) return
+      setMatchedIds((current) => (current.includes(personId) ? current : [...current, personId]))
+      setCelebrating(personId)
+    },
+    [me],
+  )
 
   const pass = useCallback((personId: string) => {
     setVerdicts((current) => ({ ...current, [personId]: 'passed' }))
   }, [])
 
-  const sendMessage = useCallback(
-    (personId: string, payload: { text?: string; trackId?: string }) => {
-      if (!payload.text?.trim() && !payload.trackId) return
-      setConversations((current) => {
-        const existing = current[personId] ?? { personId, messages: [] }
-        const message: Message = {
-          id: `m-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-          from: 'me',
-          text: payload.text?.trim() || undefined,
-          trackId: payload.trackId,
-          sentAt: Date.now(),
-        }
-        return { ...current, [personId]: { ...existing, messages: [...existing.messages, message] } }
-      })
-    },
-    [],
-  )
+  const block = useCallback((personId: string) => {
+    setBlockedIds((current) => (current.includes(personId) ? current : [...current, personId]))
+    // Blocking ends the relationship: the match, the thread and the swipe verdict.
+    setMatchedIds((current) => current.filter((id) => id !== personId))
+    setConversations((current) => {
+      const next = { ...current }
+      delete next[personId]
+      return next
+    })
+    setCelebrating((current) => (current === personId ? null : current))
+    setLiveMatch((current) =>
+      current.phase === 'found' && current.personId === personId ? { phase: 'off' } : current,
+    )
+  }, [])
+
+  const unblock = useCallback((personId: string) => {
+    setBlockedIds((current) => current.filter((id) => id !== personId))
+  }, [])
+
+  const sendMessage = useCallback<SocialState['sendMessage']>((personId, payload) => {
+    if (!payload.text?.trim() && !payload.trackId && !payload.generated) return
+    setConversations((current) => {
+      const existing = current[personId] ?? { personId, messages: [] }
+      const message: Message = {
+        id: `m-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        from: 'me',
+        text: payload.text?.trim() || undefined,
+        trackId: payload.trackId,
+        generated: payload.generated,
+        sentAt: Date.now(),
+      }
+      return { ...current, [personId]: { ...existing, messages: [...existing.messages, message] } }
+    })
+  }, [])
+
+  const toggleLiveMatch = useCallback(() => {
+    setLiveMatch((current) => (current.phase === 'off' ? { phase: 'searching' } : { phase: 'off' }))
+  }, [])
+
+  const resetAll = useCallback(() => {
+    setVerdicts({})
+    setMatchedIds(SEED_MATCHES)
+    setBlockedIds([])
+    setConversations(SEED_CONVERSATIONS)
+    setCelebrating(null)
+    setLiveMatch({ phase: 'off' })
+  }, [])
 
   const value = useMemo<SocialState>(
     () => ({
       queue,
+      visiblePeople,
       verdicts,
       matchedIds,
+      blockedIds,
       conversations,
       celebrating,
+      liveMatch,
       like,
       pass,
+      block,
+      unblock,
       dismissCelebration: () => setCelebrating(null),
       sendMessage,
+      toggleLiveMatch,
       resetQueue: () => setVerdicts({}),
+      resetAll,
     }),
-    [queue, verdicts, matchedIds, conversations, celebrating, like, pass, sendMessage],
+    [
+      queue,
+      visiblePeople,
+      verdicts,
+      matchedIds,
+      blockedIds,
+      conversations,
+      celebrating,
+      liveMatch,
+      like,
+      pass,
+      block,
+      unblock,
+      sendMessage,
+      toggleLiveMatch,
+      resetAll,
+    ],
   )
 
   return <SocialContext.Provider value={value}>{children}</SocialContext.Provider>

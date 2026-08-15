@@ -1,22 +1,24 @@
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Heart, MessageCircle, Sparkles } from 'lucide-react'
+import { ArrowLeft, Heart, MessageCircle, Sparkles, ShieldOff } from 'lucide-react'
 import { Artwork, Avatar } from '@/components/Avatar'
 import { CompatRing } from '@/components/CompatRing'
 import { TrackRow } from '@/components/TrackRow'
 import { artist, GENRE_LABEL } from '@/data/catalog'
-import { ME, PEOPLE_BY_ID } from '@/data/people'
+import { PEOPLE_BY_ID } from '@/data/people'
 import { compatibility } from '@/lib/match'
 import { useSocial } from '@/state/SocialContext'
+import { useMe } from '@/state/AuthContext'
 
 export function PersonProfile() {
   const { personId = '' } = useParams()
   const navigate = useNavigate()
-  const { matchedIds, like } = useSocial()
+  const me = useMe()
+  const { matchedIds, like, block, blockedIds } = useSocial()
 
   const other = PEOPLE_BY_ID.get(personId)
-  if (!other || other.id === ME.id) return <NotFound />
+  if (!other || blockedIds.includes(personId)) return <NotFound />
 
-  const match = compatibility(ME, other)
+  const match = compatibility(me, other)
   const isMatched = matchedIds.includes(other.id)
   const sharedArtists = new Set(match.sharedArtistIds)
   const sharedTracks = new Set(match.sharedTrackIds)
@@ -74,6 +76,18 @@ export function PersonProfile() {
             </button>
           )}
         </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              block(other.id)
+              navigate('/kesfet')
+            }}
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:bg-destructive/10 hover:text-destructive"
+          >
+            <ShieldOff className="size-4" aria-hidden="true" />
+            Engelle
+          </button>
       </section>
 
       <section>

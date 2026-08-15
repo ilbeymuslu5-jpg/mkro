@@ -6,6 +6,8 @@ import App from './App.tsx'
 import { PlayerProvider } from '@/state/PlayerContext'
 import { SocialProvider } from '@/state/SocialContext'
 import { ProfileProvider } from '@/state/ProfileContext'
+import { AuthProvider } from '@/state/AuthContext'
+import { FeedProvider } from '@/state/FeedContext'
 
 /*
   Path routing needs a server that rewrites unknown paths to index.html. The
@@ -17,13 +19,17 @@ const Router = import.meta.env.VITE_ROUTER === 'hash' ? HashRouter : BrowserRout
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Router>
-      <ProfileProvider>
-        <SocialProvider>
-          <PlayerProvider>
-            <App />
-          </PlayerProvider>
-        </SocialProvider>
-      </ProfileProvider>
+      <AuthProvider>
+        <ProfileProvider>
+          <SocialProvider>
+            <FeedProvider>
+              <PlayerProvider>
+                <App />
+              </PlayerProvider>
+            </FeedProvider>
+          </SocialProvider>
+        </ProfileProvider>
+      </AuthProvider>
     </Router>
   </StrictMode>,
 )

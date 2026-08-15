@@ -1,11 +1,12 @@
 import { useRef } from 'react'
 import { Camera, Loader2, Trash2 } from 'lucide-react'
 import { Avatar } from './Avatar'
-import { ME } from '@/data/people'
+import { useMe } from '@/state/AuthContext'
 import { useProfile } from '@/state/ProfileContext'
 
 /** Avatar with an overlaid upload control, plus a remove action once set. */
 export function PhotoPicker() {
+  const me = useMe()
   const { photo, saving, error, setPhotoFromFile, clearPhoto } = useProfile()
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -13,7 +14,7 @@ export function PhotoPicker() {
     <div>
       <div className="flex items-center gap-4">
         <div className="relative shrink-0">
-          <Avatar seed={ME.id} name={ME.name} size="lg" online={ME.online} photo={photo} />
+          <Avatar seed="me" name={me.name} size="lg" online photo={photo} />
 
           <button
             type="button"
@@ -31,9 +32,9 @@ export function PhotoPicker() {
         </div>
 
         <div className="min-w-0 flex-1">
-          <h2 className="font-display text-xl leading-tight text-resilient">{ME.name}</h2>
+          <h2 className="font-display text-xl leading-tight text-resilient">{me.name}</h2>
           <p className="mt-0.5 text-sm text-muted-foreground text-resilient">
-            {ME.age} · {ME.city}
+            {me.age} · {me.city}
           </p>
 
           {photo && (

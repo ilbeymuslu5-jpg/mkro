@@ -1,5 +1,5 @@
 import { TRACKS } from '@/data/catalog'
-import { ME, PEOPLE, type Person } from '@/data/people'
+import { PEOPLE, type Person } from '@/data/people'
 import { compatibility } from './match'
 
 export interface PopularTrack {
@@ -17,17 +17,22 @@ interface PopularOptions {
    */
   minListeners?: number
   limit?: number
+  /** People to exclude, e.g. blocked users. */
+  pool?: Person[]
 }
 
 /**
  * Ranks the catalogue by how many people you could meet through each track.
  * That count is the whole point of the grid, so it drives the order.
  */
-export function popularTracks({ minListeners = 2, limit = 12 }: PopularOptions = {}): PopularTrack[] {
+export function popularTracks(
+  me: Person,
+  { minListeners = 2, limit = 12, pool = PEOPLE }: PopularOptions = {},
+): PopularTrack[] {
   return TRACKS.map((track) => ({
     trackId: track.id,
-    listenerIds: PEOPLE.filter((person) => person.topTrackIds.includes(track.id)).map((p) => p.id),
-    inYourTop: ME.topTrackIds.includes(track.id),
+    listenerIds: pool.filter((person) => person.topTrackIds.includes(track.id)).map((p) => p.id),
+    inYourTop: me.topTrackIds.includes(track.id),
   }))
     .filter((entry) => entry.listenerIds.length >= minListeners)
     .sort((a, b) => {
@@ -51,7 +56,7 @@ export interface Recommendation {
  * most. A suggestion is only as good as who it came from, so the score is the
  * combined compatibility of its listeners rather than a raw headcount.
  */
-export function recommendationsFor(me: Person = ME, pool: Person[] = PEOPLE): Recommendation[] {
+export function recommendationsFor(me: Person, pool: Person[] = PEOPLE): Recommendation[] {
   const scoreByPerson = new Map(pool.map((p) => [p.id, compatibility(me, p).score]))
   const byTrack = new Map<string, { fromIds: string[]; weight: number }>()
 
@@ -69,4 +74,19 @@ export function recommendationsFor(me: Person = ME, pool: Person[] = PEOPLE): Re
   return [...byTrack.entries()]
     .map(([trackId, entry]) => ({ trackId, ...entry }))
     .sort((a, b) => b.weight - a.weight || a.trackId.localeCompare(b.trackId))
+}
+
+/**
+ * People listening to the exact same track right now. The mock backend has no
+ * presence feed, so "right now" is derived from whoever holds the track in
+ * their top list, with online people first.
+ *
+ * Online is a sort key rather than a filter on purpose: filtering on it hid
+ * people who plainly listen to the track — including the top match shown
+ * directly beneath the empty state, which read as a bug.
+ */
+export function listeningNow(trackId: string, pool: Person[] = PEOPLE): Person[] {
+  return pool
+    .filter((person) => person.topTrackIds.includes(trackId))
+    .sort((a, b) => Number(b.online) - Number(a.online))
 }

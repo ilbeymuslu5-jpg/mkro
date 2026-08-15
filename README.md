@@ -6,12 +6,18 @@ Müzik zevkine göre insanlarla tanıştıran sosyal uygulamanın çalışan bir
 
 ## Ne var
 
+- **Spotify ile giriş** — sahte OAuth onay ekranı; hesap seç, izinleri gör, bağlan. Zevkin, sanatçıların ve şu an çalan parçan oradan gelir
 - **Müzik uyumu motoru** — iki kişinin en çok dinlediği sanatçı, şarkı ve türleri karşılaştırıp %42–99 bandında bir uyum skoru üretir
 - **Keşfet** — uyum sırasına dizilmiş kart destesi; ortak sanatçılar, ortak türler ve marş şarkısı kartın üstünde
 - **Eşleşme** — beğendiğin kişi yeterince yakın zevkteyse karşılık verir ve kutlama ekranı açılır
 - **Sohbet** — metin mesajı ve şarkı gönderme; gönderilen şarkı baloncuğun içinden çalınır
 - **Müzik** — popüler şarkılar kare kapak ızgarasında, her birinin üstünde o şarkı üzerinden kaç kişiyle eşleşebileceğin
 - **Şarkı önerileri** — zevkine en yakın kişilerin dinlediği, senin listende olmayan şarkılar
+- **Sosyal akış** — şarkılar hakkında gönderi yaz, başkalarınınkini beğen ve yorumla
+- **Anlık eşleşme** — bir düğmeyle, tam o an aynı şarkıyı dinleyen birini bul
+- **Yapay zeka şarkısı** — sohbette eşleşmeniz için şarkı üret; aşamalı ilerleme, iptal edilebilir
+- **Platinum** — paket karşılaştırması ve yükseltme ekranı (ödeme alınmaz)
+- **Ayarlar** — bağlı hesap, engellenen kişiler, hesap verilerini silme
 - **Etkinlikler** — dinlediğin sanatçıların konserleri, en sevdiğin sanatçıya göre sıralı
 - **Profil** — müzik pasaportun: sanatçılar, şarkılar, türler, eşleşmeler
 - **Profil fotoğrafı** — kendi fotoğrafını yükle; tarayıcıda kare kırpılıp küçültülür ve kalıcı saklanır
@@ -70,13 +76,21 @@ Ham örtüşme yakın zevklerde bile ~0.7'yi geçmediği için sonuç 42–99 ba
 
 Seçilen dosya `src/lib/image.ts` içinde canvas ile ortadan kare kırpılır, 256×256'ya küçültülür ve JPEG data URL'e çevrilir — birkaç MB'lık kamera dosyası yerine ~4 kB saklanır. Sonuç `localStorage`'a yazılır, yani sayfa yenilense de kalır. Depolama kapalıysa (gizli sekme, kota dolu) fotoğraf o oturum boyunca çalışmaya devam eder; yükleme başarısız sayılmaz.
 
+## Spotify mimarisi
+
+`src/services/spotify.ts` gerçek Web API'nin şeklini taklit eder: `authorize()` bir bearer token döner, `getProfile()`, `getTopItems()` ve `getNowPlaying()` o token'la okur. Token bir saat sonra dolar, süresi geçmiş token 401 verir, `getNowPlaying()` hiçbir şey çalmıyorsa `null` döner — gerçek uç noktanın 204'ü gibi.
+
+Bu dosyayı `api.spotify.com`'a giden gerçek `fetch` çağrılarıyla değiştirmek, uygulamanın geri kalanının ihtiyaç duyduğu tek değişikliktir; hiçbir bileşen verinin uydurma olduğunu bilmez.
+
+`AuthContext` oturumu tutar, `localStorage`'a yazar, açılışta geri yükler ve şu an çalanı 15 saniyede bir yeniler. Kullanıcı artık sabit bir `ME` nesnesi değil — oturumdan türer, o yüzden farklı hesapla girince tüm uygulama değişir. Korumalı rotalar `RequireAuth` arkasında; oturum yoksa onay ekranına düşer.
+
 ## Teknik
 
 - React 19 + TypeScript, Vite 8
 - Tailwind CSS 4 (`@theme` ile token'lar)
 - react-router-dom 7, lucide-react ikonlar
-- Durum yönetimi: üç React context — `PlayerContext` (çalar), `SocialContext` (beğeni, eşleşme, mesaj), `ProfileContext` (fotoğraf)
-- Backend yok, API anahtarı yok. Tüm veri `src/data/` altında.
+- Durum yönetimi: beş React context — `AuthContext` (oturum, zevk, şu an çalan), `SocialContext` (beğeni, eşleşme, mesaj, engelleme, anlık eşleşme), `FeedContext` (gönderiler), `ProfileContext` (fotoğraf, paket), `PlayerContext` (çalar)
+- Backend yok, API anahtarı yok. Tüm veri `src/data/` ve `src/services/` altında.
 
 ### Görseller
 
@@ -101,12 +115,15 @@ Skill'in teslim öncesi kontrol listesi uygulandı: ikonlar SVG (emoji değil), 
 ```
 src/
 ├── data/          catalog.ts (sanatçı + şarkı), people.ts, events.ts
-├── lib/           match.ts (uyum motoru), discovery.ts (popülerlik + öneri),
-│               visual.ts (gradyan avatar), image.ts (fotoğraf kırpma)
-├── state/         PlayerContext.tsx, SocialContext.tsx, ProfileContext.tsx
-├── components/    AppShell, MiniPlayer, CompatRing, TrackRow, Avatar, PhotoPicker, ...
-└── pages/         Welcome, Discover, Music, Chats, ChatDetail, Events, Profile,
-                PersonProfile
+├── services/      spotify.ts (sahte Web API), aiSong.ts (şarkı üretimi)
+├── lib/           match.ts (uyum motoru), discovery.ts (popülerlik + öneri +
+│               anlık eşleşme), visual.ts, image.ts
+├── state/         AuthContext, SocialContext, FeedContext, ProfileContext,
+│               PlayerContext
+├── components/    AppShell, RequireAuth, LiveMatch, SettingsModal, MiniPlayer,
+│               CompatRing, TrackRow, Avatar, PhotoPicker, ...
+└── pages/         Welcome, Login, Discover, Feed, Music, Chats, ChatDetail,
+                Events, Platinum, Profile, PersonProfile
 ```
 
 ## Bilinen sınırlar
@@ -114,3 +131,6 @@ src/
 - Ses dosyası yok — çalar simüle ediliyor, ilerleme zamanlayıcıyla akıyor
 - Beğeniler ve mesajlar bellekte tutuluyor; sayfa yenilenince sıfırlanır (profil fotoğrafı hariç, o kalıcı)
 - Karşı taraf mesajlara cevap vermiyor; sohbetler tohum verilerle başlıyor
+- Tohum sohbetler `gecekusu` hesabının zevkine göre yazıldı; başka hesapla girince metinleri bağlamdan kopuk görünebilir
+- Üretilen yapay zeka şarkısının sesi yok — başlık, ruh hali ve süreden ibaret
+- Platinum ekranı ödeme almaz; paket yalnızca bu tarayıcıda saklanır

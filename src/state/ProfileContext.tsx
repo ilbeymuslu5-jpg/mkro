@@ -3,10 +3,16 @@ import type { ReactNode } from 'react'
 import { fileToSquareDataUrl, ImageError } from '@/lib/image'
 
 const STORAGE_KEY = 'makromusic:photo'
+const PLAN_KEY = 'makromusic:plan'
+
+export type Plan = 'free' | 'platinum'
 
 interface ProfileState {
   /** Data URL of the uploaded avatar, or null for the generated gradient. */
   photo: string | null
+  /** Subscription tier. Mock — no payment is taken. */
+  plan: Plan
+  subscribe: (plan: Plan) => void
   /** Set while the picked file is being decoded and scaled. */
   saving: boolean
   /** Human-readable reason the last upload failed. */
@@ -26,8 +32,17 @@ function readStoredPhoto(): string | null {
   }
 }
 
+function readStoredPlan(): string | null {
+  try {
+    return localStorage.getItem(PLAN_KEY)
+  } catch {
+    return null
+  }
+}
+
 export function ProfileProvider({ children }: { children: ReactNode }) {
   const [photo, setPhoto] = useState<string | null>(readStoredPhoto)
+  const [plan, setPlan] = useState<Plan>(() => (readStoredPlan() === 'platinum' ? 'platinum' : 'free'))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -62,9 +77,18 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const subscribe = useCallback((next: Plan) => {
+    setPlan(next)
+    try {
+      localStorage.setItem(PLAN_KEY, next)
+    } catch {
+      // Plan still applies for this session if storage is unavailable.
+    }
+  }, [])
+
   const value = useMemo<ProfileState>(
-    () => ({ photo, saving, error, setPhotoFromFile, clearPhoto }),
-    [photo, saving, error, setPhotoFromFile, clearPhoto],
+    () => ({ photo, plan, saving, error, setPhotoFromFile, clearPhoto, subscribe }),
+    [photo, plan, saving, error, setPhotoFromFile, clearPhoto, subscribe],
   )
 
   return <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>

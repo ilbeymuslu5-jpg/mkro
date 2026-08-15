@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { CalendarDays, Compass, Disc3, MessageCircle, User } from 'lucide-react'
+import { CalendarDays, Compass, Disc3, MessageCircle, Newspaper, Sparkles, User } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { MiniPlayer } from './MiniPlayer'
 import { MatchCelebration } from './MatchCelebration'
@@ -11,12 +11,19 @@ interface NavItem {
   icon: LucideIcon
 }
 
+/** Five primary destinations — the most a bottom bar can hold at 375px. */
 const NAV: NavItem[] = [
   { to: '/kesfet', label: 'Keşfet', icon: Compass },
+  { to: '/sosyal', label: 'Sosyal', icon: Newspaper },
   { to: '/muzik', label: 'Müzik', icon: Disc3 },
   { to: '/sohbetler', label: 'Sohbetler', icon: MessageCircle },
-  { to: '/etkinlikler', label: 'Etkinlikler', icon: CalendarDays },
   { to: '/profil', label: 'Profil', icon: User },
+]
+
+/** Reachable from the Profil page on mobile; shown outright on the sidebar. */
+const SECONDARY_NAV: NavItem[] = [
+  { to: '/etkinlikler', label: 'Etkinlikler', icon: CalendarDays },
+  { to: '/platinum', label: 'Platinum', icon: Sparkles },
 ]
 
 export function AppShell() {
@@ -37,6 +44,14 @@ export function AppShell() {
             <SidebarLink key={item.to} item={item} badge={item.to === '/sohbetler' ? unreadCount : 0} />
           ))}
         </nav>
+        <div className="mt-6 border-t border-border/60 pt-4">
+          <nav className="flex flex-col gap-1">
+            {SECONDARY_NAV.map((item) => (
+              <SidebarLink key={item.to} item={item} badge={0} />
+            ))}
+          </nav>
+        </div>
+
         <p className="mt-auto text-xs leading-relaxed text-muted-foreground">
           Müzik zevkine göre insanlarla tanış.
         </p>
