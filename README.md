@@ -14,7 +14,7 @@ Müzik zevkine göre insanlarla tanıştıran sosyal uygulamanın çalışan bir
 - **Müzik** — popüler şarkılar kare kapak ızgarasında, her birinin üstünde o şarkı üzerinden kaç kişiyle eşleşebileceğin
 - **Şarkı önerileri** — zevkine en yakın kişilerin dinlediği, senin listende olmayan şarkılar
 - **Sosyal akış** — şarkılar hakkında gönderi yaz, başkalarınınkini beğen ve yorumla
-- **Anlık eşleşme** — bir düğmeyle, tam o an aynı şarkıyı dinleyen birini bul
+- **Anlık eşleşme panosu** — radarı aç, 10 saniyede bir aynı şarkıdaki biri panoya düşsün; sağa kaydır beğen, sola kaydır geç
 - **Yapay zeka şarkısı** — sohbette eşleşmeniz için şarkı üret; aşamalı ilerleme, iptal edilebilir
 - **Platinum** — paket karşılaştırması ve yükseltme ekranı (ödeme alınmaz)
 - **Ayarlar** — bağlı hesap, engellenen kişiler, hesap verilerini silme
@@ -72,6 +72,26 @@ Ham örtüşme yakın zevklerde bile ~0.7'yi geçmediği için sonuç 42–99 ba
 - **Popüler şarkılar** — her şarkıyı kaç kişinin en çok dinlediklerinde taşıdığını sayar. Tek dinleyicili şarkılar elenir (`minListeners: 2`), çünkü "popüler" başlığı altında çıkmaz sokak listelemek başlığı anlamsız kılar. İlk 12 gösterilir.
 - **Öneriler** — senin listende olmayan şarkılar, onları dinleyen kişilerin uyum skorlarının toplamına göre sıralanır. Bir öneri, geldiği kişi kadar iyidir; bu yüzden ölçüt kişi sayısı değil, uyumların toplamı.
 
+## Anlık eşleşme panosu
+
+`/anlik` sayfası, radar açıkken 10 saniyede bir (`LIVE_BOARD_INTERVAL_MS`) panoya bir kişi ekler. İlk kart beklemeden düşer; sonrakiler ritme uyar. Şarkı değişince pano sıfırlanır — eski kartlar eski şarkıyla ilgiliydi.
+
+Adaylar `src/lib/liveBoard.ts` içinde üç kademede sıralanır ve her kart hangi kademeden geldiğini yazar:
+
+| Kademe | Etiket |
+|---|---|
+| Şarkı, kişinin en çok dinlediklerinde | şu an aynı şarkıda |
+| Şarkının sanatçısı listesinde | aynı sanatçıyı dinliyor |
+| Sanatçının türlerinden biri ortak | aynı türde takılıyor |
+
+Yalnız birinci kademeyi kullanmak panoyu yirmi saniyede kurutuyordu — herhangi bir şarkı en fazla iki üç kişinin listesinde. Alt kademeler panoyu canlı tutuyor; kart üstündeki etiket de hangisinin geçerli olduğunu saklamıyor.
+
+### Kaydırma
+
+`src/components/SwipeCard.tsx` pointer olaylarıyla çalışır, hem panoda hem Keşfet destesinde kullanılır. 110 px'i geçen yatay sürükleme kararı verir, altında kalan yayla geri döner. Sürükleme yönüne göre "BEĞEN" / "GEÇ" katmanı belirir, kart açıyla döner.
+
+İlk 8 px'te eksen kilitlenir: yatay ise kaydırma, dikey ise sayfa kaydırması olarak devam eder (`touch-action: pan-y`) — yoksa telefonda sayfayı aşağı kaydırmak imkânsız hale geliyordu. `prefers-reduced-motion` açıksa uçuş animasyonu atlanır, karar anında uygulanır. Düğmeler de duruyor; kaydırma tek yol değil.
+
 ## Profil fotoğrafı
 
 Seçilen dosya `src/lib/image.ts` içinde canvas ile ortadan kare kırpılır, 256×256'ya küçültülür ve JPEG data URL'e çevrilir — birkaç MB'lık kamera dosyası yerine ~4 kB saklanır. Sonuç `localStorage`'a yazılır, yani sayfa yenilense de kalır. Depolama kapalıysa (gizli sekme, kota dolu) fotoğraf o oturum boyunca çalışmaya devam eder; yükleme başarısız sayılmaz.
@@ -116,14 +136,14 @@ Skill'in teslim öncesi kontrol listesi uygulandı: ikonlar SVG (emoji değil), 
 src/
 ├── data/          catalog.ts (sanatçı + şarkı), people.ts, events.ts
 ├── services/      spotify.ts (sahte Web API), aiSong.ts (şarkı üretimi)
-├── lib/           match.ts (uyum motoru), discovery.ts (popülerlik + öneri +
-│               anlık eşleşme), visual.ts, image.ts
+├── lib/           match.ts (uyum motoru), discovery.ts (popülerlik + öneri),
+│               liveBoard.ts (pano adayları), visual.ts, image.ts
 ├── state/         AuthContext, SocialContext, FeedContext, ProfileContext,
 │               PlayerContext
-├── components/    AppShell, RequireAuth, LiveMatch, SettingsModal, MiniPlayer,
-│               CompatRing, TrackRow, Avatar, PhotoPicker, ...
-└── pages/         Welcome, Login, Discover, Feed, Music, Chats, ChatDetail,
-                Events, Platinum, Profile, PersonProfile
+├── components/    AppShell, RequireAuth, SwipeCard, LiveMatch, SettingsModal,
+│               MiniPlayer, CompatRing, TrackRow, Avatar, PhotoPicker, ...
+└── pages/         Welcome, Login, Discover, LiveBoard, Feed, Music, Chats,
+                ChatDetail, Events, Platinum, Profile, PersonProfile
 ```
 
 ## Bilinen sınırlar

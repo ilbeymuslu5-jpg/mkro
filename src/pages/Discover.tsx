@@ -10,6 +10,7 @@ import { compatibility } from '@/lib/match'
 import { useSocial } from '@/state/SocialContext'
 import { useMe } from '@/state/AuthContext'
 import { LiveMatch } from '@/components/LiveMatch'
+import { SwipeCard } from '@/components/SwipeCard'
 
 export function Discover() {
   const me = useMe()
@@ -47,10 +48,11 @@ export function Discover() {
           />
         ))}
 
-        <article
+        <SwipeCard
           key={currentId}
-          className="animate-rise overflow-hidden rounded-2xl border border-border/70 bg-card"
+          onSwipe={(direction) => (direction === 'like' ? like(currentId) : pass(currentId))}
         >
+          <article className="animate-rise overflow-hidden rounded-2xl border border-border/70 bg-card select-none">
           <div className="p-5">
             {/* At 375px the bio needs the full width, so it drops below the identity row. */}
             <div className="flex items-center gap-4">
@@ -119,7 +121,8 @@ export function Discover() {
               Profilin tamamını gör
             </Link>
           </div>
-        </article>
+          </article>
+        </SwipeCard>
       </div>
 
       <div className="mt-5 flex items-center justify-center gap-4">

@@ -1,8 +1,8 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { PEOPLE, person, type Person } from '@/data/people'
 import { compatibility, MUTUAL_LIKE_SCORE } from '@/lib/match'
-import { listeningNow } from '@/lib/discovery'
+import { liveCandidates, type LiveCandidate } from '@/lib/liveBoard'
 import { useAuth } from './AuthContext'
 
 export interface Message {
@@ -30,11 +30,8 @@ export interface Conversation {
 
 type Verdict = 'liked' | 'passed'
 
-export type LiveMatchState =
-  | { phase: 'off' }
-  | { phase: 'searching' }
-  | { phase: 'found'; personId: string; trackId: string }
-  | { phase: 'empty'; trackId: string | null }
+/** How often a new person is loaded onto the live board. */
+export const LIVE_BOARD_INTERVAL_MS = 10_000
 
 interface SocialState {
   /** People not yet swiped, best match first, blocked users removed. */
@@ -46,7 +43,12 @@ interface SocialState {
   blockedIds: string[]
   conversations: Record<string, Conversation>
   celebrating: string | null
-  liveMatch: LiveMatchState
+  /** True while the board is pulling people in. */
+  liveOn: boolean
+  /** People loaded onto the board and not yet swiped, oldest first. */
+  liveBoard: LiveCandidate[]
+  /** Everyone the current track can still supply, for the exhausted state. */
+  liveExhausted: boolean
   like: (personId: string) => void
   pass: (personId: string) => void
   block: (personId: string) => void
@@ -57,6 +59,8 @@ interface SocialState {
     payload: { text?: string; trackId?: string; generated?: GeneratedTrack },
   ) => void
   toggleLiveMatch: () => void
+  /** Decide on the top board card. Likes go through the normal match rules. */
+  swipeLive: (personId: string, direction: 'like' | 'pass') => void
   resetQueue: () => void
   resetAll: () => void
 }
@@ -91,7 +95,9 @@ export function SocialProvider({ children }: { children: ReactNode }) {
   const [blockedIds, setBlockedIds] = useState<string[]>([])
   const [conversations, setConversations] = useState<Record<string, Conversation>>(SEED_CONVERSATIONS)
   const [celebrating, setCelebrating] = useState<string | null>(null)
-  const [liveMatch, setLiveMatch] = useState<LiveMatchState>({ phase: 'off' })
+  const [liveOn, setLiveOn] = useState(false)
+  const [liveBoard, setLiveBoard] = useState<LiveCandidate[]>([])
+  const [liveSeen, setLiveSeen] = useState<string[]>([])
 
   const visiblePeople = useMemo(
     () => PEOPLE.filter((p) => !blockedIds.includes(p.id)),
@@ -107,26 +113,51 @@ export function SocialProvider({ children }: { children: ReactNode }) {
       .map((entry) => entry.id)
   }, [me, visiblePeople, verdicts, matchedIds])
 
-  // Live match: a short simulated search, then whoever is on the same track.
+  const trackId = nowPlaying?.trackId ?? null
+
+  /** Candidates for the current track that have not been dealt yet. */
+  const pending = useMemo(() => {
+    if (!trackId) return []
+    const onBoard = new Set(liveBoard.map((entry) => entry.personId))
+    return liveCandidates(trackId, visiblePeople).filter(
+      (entry) => !onBoard.has(entry.personId) && !liveSeen.includes(entry.personId),
+    )
+  }, [trackId, visiblePeople, liveBoard, liveSeen])
+
+  /*
+    Read through a ref inside the loop below. Depending on these directly would
+    restart the interval on every swipe, dealing the next card instantly instead
+    of on the ten-second beat.
+  */
+  const latest = useRef({ visiblePeople, liveSeen })
+  latest.current = { visiblePeople, liveSeen }
+
+  // Deal one person onto the board on every tick while the radar is on.
   useEffect(() => {
-    if (liveMatch.phase !== 'searching') return
+    if (!liveOn || !trackId) return
 
-    const timer = window.setTimeout(() => {
-      const trackId = nowPlaying?.trackId ?? null
-      if (!trackId) {
-        setLiveMatch({ phase: 'empty', trackId: null })
-        return
-      }
-      const candidates = listeningNow(trackId, visiblePeople)
-      setLiveMatch(
-        candidates.length > 0
-          ? { phase: 'found', personId: candidates[0].id, trackId }
-          : { phase: 'empty', trackId },
-      )
-    }, 1600)
+    const deal = () => {
+      const { visiblePeople: pool, liveSeen: seen } = latest.current
+      setLiveBoard((current) => {
+        const onBoard = new Set(current.map((entry) => entry.personId))
+        const next = liveCandidates(trackId, pool).find(
+          (entry) => !onBoard.has(entry.personId) && !seen.includes(entry.personId),
+        )
+        return next ? [...current, next] : current
+      })
+    }
 
-    return () => window.clearTimeout(timer)
-  }, [liveMatch.phase, nowPlaying, visiblePeople])
+    // First card lands immediately; the rest arrive on the interval.
+    deal()
+    const id = window.setInterval(deal, LIVE_BOARD_INTERVAL_MS)
+    return () => window.clearInterval(id)
+  }, [liveOn, trackId])
+
+  // A new track resets the board — the old cards were about the old song.
+  useEffect(() => {
+    setLiveBoard([])
+    setLiveSeen([])
+  }, [trackId])
 
   const like = useCallback(
     (personId: string) => {
@@ -154,9 +185,7 @@ export function SocialProvider({ children }: { children: ReactNode }) {
       return next
     })
     setCelebrating((current) => (current === personId ? null : current))
-    setLiveMatch((current) =>
-      current.phase === 'found' && current.personId === personId ? { phase: 'off' } : current,
-    )
+    setLiveBoard((current) => current.filter((entry) => entry.personId !== personId))
   }, [])
 
   const unblock = useCallback((personId: string) => {
@@ -180,8 +209,21 @@ export function SocialProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const toggleLiveMatch = useCallback(() => {
-    setLiveMatch((current) => (current.phase === 'off' ? { phase: 'searching' } : { phase: 'off' }))
+    setLiveOn((current) => {
+      if (current) setLiveBoard([])
+      return !current
+    })
   }, [])
+
+  const swipeLive = useCallback(
+    (personId: string, direction: 'like' | 'pass') => {
+      setLiveBoard((current) => current.filter((entry) => entry.personId !== personId))
+      setLiveSeen((current) => (current.includes(personId) ? current : [...current, personId]))
+      if (direction === 'like') like(personId)
+      else pass(personId)
+    },
+    [like, pass],
+  )
 
   const resetAll = useCallback(() => {
     setVerdicts({})
@@ -189,7 +231,9 @@ export function SocialProvider({ children }: { children: ReactNode }) {
     setBlockedIds([])
     setConversations(SEED_CONVERSATIONS)
     setCelebrating(null)
-    setLiveMatch({ phase: 'off' })
+    setLiveOn(false)
+    setLiveBoard([])
+    setLiveSeen([])
   }, [])
 
   const value = useMemo<SocialState>(
@@ -201,7 +245,9 @@ export function SocialProvider({ children }: { children: ReactNode }) {
       blockedIds,
       conversations,
       celebrating,
-      liveMatch,
+      liveOn,
+      liveBoard,
+      liveExhausted: pending.length === 0,
       like,
       pass,
       block,
@@ -209,6 +255,7 @@ export function SocialProvider({ children }: { children: ReactNode }) {
       dismissCelebration: () => setCelebrating(null),
       sendMessage,
       toggleLiveMatch,
+      swipeLive,
       resetQueue: () => setVerdicts({}),
       resetAll,
     }),
@@ -220,13 +267,16 @@ export function SocialProvider({ children }: { children: ReactNode }) {
       blockedIds,
       conversations,
       celebrating,
-      liveMatch,
+      liveOn,
+      liveBoard,
+      pending,
       like,
       pass,
       block,
       unblock,
       sendMessage,
       toggleLiveMatch,
+      swipeLive,
       resetAll,
     ],
   )

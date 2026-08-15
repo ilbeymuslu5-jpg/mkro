@@ -11,7 +11,7 @@ import { useMe } from '@/state/AuthContext'
 import { useProfile } from '@/state/ProfileContext'
 import { SettingsModal } from '@/components/SettingsModal'
 import { useState } from 'react'
-import { CalendarDays, Settings, Sparkles } from 'lucide-react'
+import { CalendarDays, Radio, Settings, Sparkles } from 'lucide-react'
 
 export function Profile() {
   const me = useMe()
@@ -95,6 +95,15 @@ export function Profile() {
       <section>
         <h2 className="mb-3 font-display text-lg">Daha fazlası</h2>
         <ul className="space-y-2">
+          <li>
+            <Link
+              to="/anlik"
+              className="flex items-center gap-3 rounded-xl border border-border/70 bg-card px-4 py-3 text-sm font-medium transition-colors duration-200 hover:bg-muted/60"
+            >
+              <Radio className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              Anlık eşleşme
+            </Link>
+          </li>
           <li>
             <Link
               to="/etkinlikler"
