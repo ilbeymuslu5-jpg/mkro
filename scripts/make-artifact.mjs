@@ -16,6 +16,7 @@ import { dirname, resolve } from 'node:path'
 const root = resolve(import.meta.dirname, '..')
 const source = readFileSync(resolve(root, 'dist-single/index.html'), 'utf8')
 const target = resolve(root, 'artifact/makromusic.html')
+const standaloneTarget = resolve(root, 'artifact/makromusic-standalone.html')
 
 const pickOne = (pattern, label) => {
   const match = source.match(pattern)
@@ -77,4 +78,31 @@ writeFileSync(target, page)
 console.log(
   `artifact/makromusic.html — ${(page.length / 1024).toFixed(0)} kB ` +
     `(script ${(scriptBytes / 1024).toFixed(0)} kB), no external refs`,
+)
+
+/*
+  Second output: a complete document to open straight from disk or drop on any
+  static host. The build references /favicon.svg by path, which 404s under
+  file://, so it is inlined as a data URI and the file depends on nothing but
+  the optional web font.
+*/
+const favicon = readFileSync(resolve(root, 'public/favicon.svg'), 'utf8')
+const faviconUri = `data:image/svg+xml;base64,${Buffer.from(favicon).toString('base64')}`
+
+const standalone = source.replace(
+  /<link\s+rel="icon"[^>]*>/i,
+  `<link rel="icon" type="image/svg+xml" href="${faviconUri}" />`,
+)
+
+if (standalone.includes('href="/favicon.svg"')) {
+  throw new Error('Favicon path was not inlined — the standalone file would 404 under file://')
+}
+if (!/<!doctype html>/i.test(standalone)) {
+  throw new Error('Standalone output is not a complete document')
+}
+
+writeFileSync(standaloneTarget, standalone)
+console.log(
+  `artifact/makromusic-standalone.html — ${(standalone.length / 1024).toFixed(0)} kB, ` +
+    `complete document, favicon inlined`,
 )

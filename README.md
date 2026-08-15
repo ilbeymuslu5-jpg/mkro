@@ -35,8 +35,13 @@ Uygulamanın tamamı (CSS + JS dahil) tek bir HTML dosyasına gömülebilir — 
 
 ```bash
 npm run build:single             # dist-single/index.html
-node scripts/make-artifact.mjs   # artifact/makromusic.html
+node scripts/make-artifact.mjs   # artifact/ altına iki dosya yazar
 ```
+
+| Dosya | Ne işe yarar |
+|---|---|
+| `artifact/makromusic-standalone.html` | Tam HTML belgesi. Çift tıkla açılır, statik sunucuya atılır. Favicon gömülü. |
+| `artifact/makromusic.html` | Sarmalayıcısız gövde — `<html>/<head>/<body>` etiketlerini host'un sağladığı ortamlar için. Tek başına açılmaz. |
 
 Bu sürüm yol tabanlı yönlendirme yerine hash yönlendirmesi kullanır (`#/kesfet`), çünkü statik bir dosyada bilinmeyen yolları `index.html`'e çeviren sunucu yoktur.
 
