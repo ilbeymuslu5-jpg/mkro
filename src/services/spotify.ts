@@ -1,38 +1,59 @@
 /**
- * Mock Spotify Web API client.
+ * Spotify Web API client — real network calls.
  *
- * The shape mirrors the real thing — an authorize step that returns a bearer
- * token, then token-scoped reads for the profile, top tracks, top artists and
- * the currently playing item. Swapping this file for real `fetch` calls against
- * api.spotify.com is the only change the rest of the app should need, so
- * nothing outside this module knows the data is fabricated.
+ * Sign-in is not done here. Supabase Auth brokers the OAuth2 flow with Spotify
+ * as the provider, which is what creates the `auth.users` row that every row
+ * level security policy depends on. What comes back from that flow is a
+ * `provider_token`, and this module is what spends it.
+ *
+ * Known limit: a browser cannot refresh a Supabase-brokered Spotify token,
+ * because that exchange needs the client secret. Spotify tokens last an hour,
+ * so `SpotifyAuthExpired` is thrown on 401 and the UI asks the user to
+ * reconnect. Moving the refresh into a Supabase Edge Function holding the
+ * secret is the production fix; nothing else in the app changes when it lands.
  */
-import type { Genre } from '@/data/catalog'
+
+const API = 'https://api.spotify.com/v1'
+
+/** Scopes requested at sign-in. Kept here so the consent copy cannot drift. */
+export const SPOTIFY_SCOPES = [
+  'user-read-email',
+  'user-read-private',
+  'user-top-read',
+  'user-read-currently-playing',
+  'user-read-playback-state',
+]
 
 export interface SpotifyProfile {
   id: string
   displayName: string
-  email: string
-  country: string
-  product: 'free' | 'premium'
+  email: string | null
+  country: string | null
+  product: string | null
+  imageUrl: string | null
 }
 
-export interface SpotifySession {
-  accessToken: string
-  /** Epoch millis. The real API issues one-hour tokens. */
-  expiresAt: number
-  scope: string[]
-  profile: SpotifyProfile
+export interface SpotifyArtist {
+  id: string
+  name: string
+  genres: string[]
+  imageUrl: string | null
 }
 
-export interface SpotifyTaste {
-  topTrackIds: string[]
-  topArtistIds: string[]
-  genres: Genre[]
+export interface SpotifyTrack {
+  id: string
+  name: string
+  artistId: string
+  artistName: string
+  imageUrl: string | null
+  durationMs: number
 }
 
 export interface NowPlaying {
   trackId: string
+  name: string
+  artistName: string
+  imageUrl: string | null
   isPlaying: boolean
   progressMs: number
 }
@@ -46,150 +67,122 @@ export class SpotifyError extends Error {
   }
 }
 
-const SCOPES = ['user-read-email', 'user-top-read', 'user-read-currently-playing']
-
-/** Accounts the mock consent screen can sign in as. */
-export interface MockAccount {
-  id: string
-  profile: SpotifyProfile
-  taste: SpotifyTaste
-  persona: { name: string; age: number; city: string; bio: string }
-  nowPlayingTrackId: string
-}
-
-export const MOCK_ACCOUNTS: MockAccount[] = [
-  {
-    id: 'sp-gece',
-    profile: {
-      id: 'sp-gece',
-      displayName: 'gecekusu',
-      email: 'gecekusu@example.com',
-      country: 'TR',
-      product: 'premium',
-    },
-    persona: {
-      name: 'Sen',
-      age: 27,
-      city: 'İstanbul',
-      bio: 'Gece yarısı kulaklık takıp şehirde yürüyen tip. Plak biriktiriyorum.',
-    },
-    taste: {
-      topArtistIds: ['a-radiohead', 'a-adamlar', 'a-tameimpala', 'a-bonobo', 'a-altin'],
-      topTrackIds: ['t-11', 't-6', 't-12', 't-14', 't-9'],
-      genres: ['indie', 'alternatif', 'elektronik', 'anadolu-rock'],
-    },
-    nowPlayingTrackId: 't-11',
-  },
-  {
-    id: 'sp-45lik',
-    profile: {
-      id: 'sp-45lik',
-      displayName: '45lik',
-      email: '45lik@example.com',
-      country: 'TR',
-      product: 'free',
-    },
-    persona: {
-      name: 'Sen',
-      age: 31,
-      city: 'Ankara',
-      bio: '70’ler Anadolu rock kazısı. Plakçı tozu yutmadan gün bitmez.',
-    },
-    taste: {
-      topArtistIds: ['a-erkin', 'a-baris', 'a-mfo', 'a-altin', 'a-gaye'],
-      topTrackIds: ['t-3', 't-2', 't-1', 't-9', 't-8'],
-      genres: ['anadolu-rock', 'rock', 'indie'],
-    },
-    nowPlayingTrackId: 't-3',
-  },
-  {
-    id: 'sp-nokta',
-    profile: {
-      id: 'sp-nokta',
-      displayName: 'nokta.vurus',
-      email: 'nokta@example.com',
-      country: 'TR',
-      product: 'premium',
-    },
-    persona: {
-      name: 'Sen',
-      age: 24,
-      city: 'İzmir',
-      bio: 'Rap ve lo-fi arası bir yerdeyim. Punchline tartışmasına her zaman varım.',
-    },
-    taste: {
-      topArtistIds: ['a-kendrick', 'a-ezhel', 'a-nujabes', 'a-frank', 'a-sza'],
-      topTrackIds: ['t-18', 't-19', 't-17', 't-27', 't-26'],
-      genres: ['hip-hop', 'lo-fi', 'r&b'],
-    },
-    nowPlayingTrackId: 't-18',
-  },
-]
-
-const TOKEN_TTL_MS = 60 * 60 * 1000
-
-const latency = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
-function accountFor(token: string): MockAccount {
-  const account = MOCK_ACCOUNTS.find((candidate) => token.endsWith(candidate.id))
-  if (!account) throw new SpotifyError('Geçersiz erişim anahtarı.', 401)
-  return account
-}
-
-function assertLive(session: SpotifySession): void {
-  if (session.expiresAt <= Date.now()) {
-    throw new SpotifyError('Oturum süresi doldu. Yeniden bağlan.', 401)
+/** Thrown when the provider token is gone or rejected — re-consent required. */
+export class SpotifyAuthExpired extends SpotifyError {
+  constructor() {
+    super('Spotify bağlantısı süresi doldu. Yeniden bağlan.', 401)
   }
 }
 
-/**
- * Stands in for the authorization-code redirect. The real flow leaves the page;
- * here the consent screen is rendered in-app and this resolves with the token.
- */
-export async function authorize(accountId: string): Promise<SpotifySession> {
-  await latency(900)
-  const account = MOCK_ACCOUNTS.find((candidate) => candidate.id === accountId)
-  if (!account) throw new SpotifyError('Hesap bulunamadı.', 404)
+async function get<T>(path: string, token: string): Promise<T | null> {
+  if (!token) throw new SpotifyAuthExpired()
 
-  return {
-    accessToken: `mock-token-${account.id}`,
-    expiresAt: Date.now() + TOKEN_TTL_MS,
-    scope: SCOPES,
-    profile: account.profile,
+  const response = await fetch(`${API}${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
+  if (response.status === 401) throw new SpotifyAuthExpired()
+
+  // 204 is Spotify's "nothing to report" — most notably currently-playing.
+  if (response.status === 204) return null
+
+  if (response.status === 429) {
+    const retry = response.headers.get('Retry-After') ?? '?'
+    throw new SpotifyError(`Spotify hız sınırı aşıldı. ${retry} saniye sonra dene.`, 429)
   }
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}))
+    throw new SpotifyError(payload.error?.message ?? 'Spotify isteği başarısız.', response.status)
+  }
+
+  return (await response.json()) as T
 }
 
 /** GET /v1/me */
-export async function getProfile(session: SpotifySession): Promise<SpotifyProfile> {
-  assertLive(session)
-  await latency(220)
-  return accountFor(session.accessToken).profile
+export async function getProfile(token: string): Promise<SpotifyProfile> {
+  const data = await get<{
+    id: string
+    display_name: string | null
+    email?: string
+    country?: string
+    product?: string
+    images?: { url: string }[]
+  }>('/me', token)
+
+  if (!data) throw new SpotifyError('Spotify profili alınamadı.', 500)
+
+  return {
+    id: data.id,
+    displayName: data.display_name ?? data.id,
+    email: data.email ?? null,
+    country: data.country ?? null,
+    product: data.product ?? null,
+    imageUrl: data.images?.[0]?.url ?? null,
+  }
 }
 
-/** GET /v1/me/top/tracks and /v1/me/top/artists, collapsed into one taste read. */
-export async function getTopItems(session: SpotifySession): Promise<SpotifyTaste> {
-  assertLive(session)
-  await latency(420)
-  return accountFor(session.accessToken).taste
+/** GET /v1/me/top/artists */
+export async function getTopArtists(token: string, limit = 20): Promise<SpotifyArtist[]> {
+  const data = await get<{
+    items: { id: string; name: string; genres: string[]; images?: { url: string }[] }[]
+  }>(`/me/top/artists?limit=${limit}&time_range=medium_term`, token)
+
+  return (data?.items ?? []).map((item) => ({
+    id: item.id,
+    name: item.name,
+    genres: item.genres ?? [],
+    imageUrl: item.images?.[0]?.url ?? null,
+  }))
+}
+
+/** GET /v1/me/top/tracks */
+export async function getTopTracks(token: string, limit = 20): Promise<SpotifyTrack[]> {
+  const data = await get<{
+    items: {
+      id: string
+      name: string
+      duration_ms: number
+      artists: { id: string; name: string }[]
+      album?: { images?: { url: string }[] }
+    }[]
+  }>(`/me/top/tracks?limit=${limit}&time_range=medium_term`, token)
+
+  return (data?.items ?? []).map((item) => ({
+    id: item.id,
+    name: item.name,
+    artistId: item.artists[0]?.id ?? '',
+    artistName: item.artists.map((a) => a.name).join(', '),
+    imageUrl: item.album?.images?.[0]?.url ?? null,
+    durationMs: item.duration_ms,
+  }))
 }
 
 /**
  * GET /v1/me/player/currently-playing.
- * The real endpoint answers 204 with no body when nothing is playing, which is
- * why this resolves to null rather than throwing.
+ * Resolves to null when nothing is playing, and also when the item is a
+ * podcast episode or local file, which arrive without a track object.
  */
-export async function getNowPlaying(session: SpotifySession): Promise<NowPlaying | null> {
-  assertLive(session)
-  await latency(180)
-  const account = accountFor(session.accessToken)
+export async function getNowPlaying(token: string): Promise<NowPlaying | null> {
+  const data = await get<{
+    is_playing: boolean
+    progress_ms: number | null
+    item: {
+      id: string
+      name: string
+      artists: { name: string }[]
+      album?: { images?: { url: string }[] }
+    } | null
+  }>('/me/player/currently-playing', token)
 
-  // Progress advances with wall-clock time so the UI has something live to show.
-  const cycleMs = 4 * 60 * 1000
+  if (!data?.item) return null
+
   return {
-    trackId: account.nowPlayingTrackId,
-    isPlaying: true,
-    progressMs: Date.now() % cycleMs,
+    trackId: data.item.id,
+    name: data.item.name,
+    artistName: data.item.artists.map((a) => a.name).join(', '),
+    imageUrl: data.item.album?.images?.[0]?.url ?? null,
+    isPlaying: data.is_playing,
+    progressMs: data.progress_ms ?? 0,
   }
 }
-
-export const SPOTIFY_SCOPES = SCOPES

@@ -10,7 +10,7 @@ import {
   type NowPlaying,
   type SpotifySession,
   type SpotifyTaste,
-} from '@/services/spotify'
+} from '@/services/spotifyMock'
 
 const SESSION_KEY = 'makromusic:session'
 

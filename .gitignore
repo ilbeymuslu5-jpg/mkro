@@ -24,3 +24,7 @@ artifact
 *.njsproj
 *.sln
 *.sw?
+
+# Local secrets
+.env
+.env.local

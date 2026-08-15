@@ -1,5 +1,6 @@
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Heart, MessageCircle, Sparkles, ShieldOff } from 'lucide-react'
+import { useState } from 'react'
+import { ArrowLeft, Flag, Heart, MessageCircle, Sparkles, ShieldOff } from 'lucide-react'
 import { Artwork, Avatar } from '@/components/Avatar'
 import { CompatRing } from '@/components/CompatRing'
 import { TrackRow } from '@/components/TrackRow'
@@ -8,12 +9,16 @@ import { PEOPLE_BY_ID } from '@/data/people'
 import { compatibility } from '@/lib/match'
 import { useSocial } from '@/state/SocialContext'
 import { useMe } from '@/state/AuthContext'
+import { ReportDialog } from '@/components/ReportDialog'
+import { reportUser, type ReportReason } from '@/services/db'
+import { isSupabaseConfigured } from '@/lib/supabase'
 
 export function PersonProfile() {
   const { personId = '' } = useParams()
   const navigate = useNavigate()
   const me = useMe()
   const { matchedIds, like, block, blockedIds } = useSocial()
+  const [reporting, setReporting] = useState(false)
 
   const other = PEOPLE_BY_ID.get(personId)
   if (!other || blockedIds.includes(personId)) return <NotFound />
@@ -77,18 +82,47 @@ export function PersonProfile() {
           )}
         </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              block(other.id)
-              navigate('/kesfet')
-            }}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:bg-destructive/10 hover:text-destructive"
-          >
-            <ShieldOff className="size-4" aria-hidden="true" />
-            Engelle
-          </button>
+          <div className="mt-2 flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                block(other.id)
+                navigate('/kesfet')
+              }}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:bg-destructive/10 hover:text-destructive"
+            >
+              <ShieldOff className="size-4" aria-hidden="true" />
+              Engelle
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setReporting(true)}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:bg-destructive/10 hover:text-destructive"
+            >
+              <Flag className="size-4" aria-hidden="true" />
+              Şikayet et
+            </button>
+          </div>
       </section>
+
+      <ReportDialog
+        open={reporting}
+        personName={other.name}
+        onClose={() => setReporting(false)}
+        onSubmit={async (reason: ReportReason, detail: string) => {
+          if (!isSupabaseConfigured()) {
+            throw new Error('Şikayet kaydı için Supabase yapılandırılmalı.')
+          }
+          await reportUser({
+            reporterId: 'me',
+            reportedId: other.id,
+            reason,
+            detail,
+            contextType: 'profile',
+          })
+        }}
+      />
 
       <section>
         <h2 className="mb-3 font-display text-lg">En çok dinledikleri</h2>

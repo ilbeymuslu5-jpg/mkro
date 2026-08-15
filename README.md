@@ -154,3 +154,67 @@ src/
 - Tohum sohbetler `gecekusu` hesabının zevkine göre yazıldı; başka hesapla girince metinleri bağlamdan kopuk görünebilir
 - Üretilen yapay zeka şarkısının sesi yok — başlık, ruh hali ve süreden ibaret
 - Platinum ekranı ödeme almaz; paket yalnızca bu tarayıcıda saklanır
+
+---
+
+# Gerçek servislere geçiş
+
+Uygulama şu an mock veriyle çalışıyor. Gerçek mimariye geçiş başladı; bu bölüm nerede kalındığını ve nasıl devam edileceğini anlatır.
+
+## Neden Supabase
+
+Firebase yerine Supabase seçildi, belirleyici olan **mesafe bazlı eşleşme**:
+
+| İhtiyaç | Supabase (Postgres) | Firebase (Firestore) |
+|---|---|---|
+| Yarıçap sorgusu | PostGIS ile tek indeksli `st_dwithin` | Yerel destek yok; geohash kütüphanesi + istemcide eleme |
+| Zevk + mesafe birlikte | Tek SQL sorgusu | Sunucu tarafı birleştirme yok, iki aşama |
+| Moderasyon | RLS ile satır bazlı; şikayeti yalnız sahibi ve servis rolü görür | Security Rules, daha kırılgan |
+| Gerçek zamanlı sohbet | Realtime, tabloya abone | Var |
+
+## Kurulum
+
+```bash
+cp .env.example .env      # değerleri doldur
+npm install
+```
+
+**Spotify:** [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard) → uygulama oluştur → redirect URI'yi Supabase'in verdiği callback adresi yap → Client ID ve Secret'ı Supabase'e gir.
+
+**Supabase:** proje oluştur → Authentication > Providers > Spotify'ı aç → SQL Editor'de `supabase/migrations/` altındaki dosyaları sırayla çalıştır.
+
+## Şema
+
+| Dosya | İçerik |
+|---|---|
+| `0001_init.sql` | Tablolar: profiles (PostGIS konum), top_artists, top_tracks, now_playing, swipes, matches, posts, post_likes, post_comments, messages, blocks, reports. Karşılıklı beğeniyi eşleşmeye çeviren trigger. Realtime yayını. |
+| `0002_rls.sql` | Row level security. Engelleme iki yönlü çalışır: taraflardan biri engellediyse ikisi de diğerinin satırlarını göremez. Kimin seni beğendiği görünmez — sadece eşleşme satırı görünür. |
+| `0003_discovery.sql` | `taste_score` (istemcideki `match.ts` ile aynı formül), `discover_candidates` (zevk + mesafe tek sorguda), `listening_now` (aynı şarkı + tazelik penceresi), `set_my_location`. |
+
+Mesafe filtresi `max_distance_km` null ise "her yer" demektir. Konumu olmayan profiller **yalnızca** o durumda listeye girer — konumu bilinmeyen birine mesafe filtresi uygulamak dürüst olmaz.
+
+## Kod katmanı
+
+| Dosya | Durum |
+|---|---|
+| `src/services/spotify.ts` | **Gerçek.** api.spotify.com'a `fetch`; profil, top artists, top tracks, şu an çalan. 204, 401 ve 429 ayrı ayrı ele alınıyor. |
+| `src/services/db.ts` | **Gerçek.** Tüm CRUD, Realtime abonelikleri, konum, engelleme, şikayet. |
+| `src/lib/supabase.ts` | İstemci. Ortam değişkenleri yoksa `null` — çağıranlar bunu ele almak zorunda. |
+| `src/components/ReportDialog.tsx` | **Bağlı.** Kişi profilinde "Şikayet et". |
+| `src/services/spotifyMock.ts` | **Geçici.** Arayüzü ayakta tutuyor, migrasyon bitince silinecek. |
+
+### Spotify token'ının bir saatlik sınırı
+
+Giriş Supabase Auth üzerinden yapılır (sağlayıcı: Spotify), çünkü RLS'in `auth.uid()`'e ihtiyacı var. Dönen `provider_token` ile Web API çağrılır. Bu token tarayıcıda yenilenemez — yenileme client secret ister. Bir saat sonra `SpotifyAuthExpired` fırlar ve kullanıcıdan yeniden bağlanması istenir. Üretim çözümü: secret'ı tutan bir Supabase Edge Function; uygulamanın geri kalanında hiçbir şey değişmez.
+
+## Kalan iş
+
+Arayüzün tamamı hâlâ `src/data/catalog.ts` üzerinden render ediyor — yerel id'ler (`t-11`), gerçek Spotify id'leri değil. Migrasyonun kalanı:
+
+1. `AuthContext`'i Supabase Auth'a bağla, `spotifyMock.ts`'i sil
+2. Bileşenleri id yerine veritabanındaki `track_name` / `artist_name` / `image_url` sütunlarıyla besle, `data/catalog.ts` ve `data/people.ts`'i kaldır
+3. `SocialContext` ve `FeedContext`'i `services/db.ts` çağrılarına çevir
+4. `ChatDetail`'e `subscribeToMessages` bağla
+5. Konum izni akışı → `setLocation`, keşifte mesafe filtresi
+
+**Sosyal grafik uyarısı:** mock `PEOPLE` kaldırıldığında keşif destesi, pano ve öneriler boşalır. Gerçek kullanıcılar kaydolana kadar uygulama boş görünür; test için seed kullanıcı stratejisi gerekir.

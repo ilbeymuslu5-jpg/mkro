@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { Check, Loader2, ShieldCheck } from 'lucide-react'
 import { Wordmark } from '@/components/AppShell'
-import { MOCK_ACCOUNTS, SPOTIFY_SCOPES } from '@/services/spotify'
+import { MOCK_ACCOUNTS, SPOTIFY_SCOPES } from '@/services/spotifyMock'
 import { useAuth } from '@/state/AuthContext'
 
 const SCOPE_LABEL: Record<string, string> = {
