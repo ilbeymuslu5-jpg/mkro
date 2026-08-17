@@ -48,13 +48,13 @@ export function CompatRing({ score, size = 64, showCaption = true }: CompatRingP
         />
       </svg>
       <span className="absolute inset-0 grid place-items-center leading-none">
-        <span className="font-display" style={{ fontSize: size * 0.28 }}>
+        <span className="font-display" style={{ fontSize: Math.max(15, size * 0.3) }}>
           {score}
         </span>
         {showCaption && (
           <span
             className="mt-0.5 text-muted-foreground uppercase"
-            style={{ fontSize: Math.max(7, size * 0.1) }}
+            style={{ fontSize: Math.max(10, size * 0.15) }}
           >
             uyum
           </span>

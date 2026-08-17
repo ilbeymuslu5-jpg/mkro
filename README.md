@@ -65,6 +65,14 @@ node audit.mjs
 
 Bu geçişte bulup düzelttikleri: orta bant uyum skoru 2.13:1 kontrastla okunmuyordu (`--color-secondary-bright` eklendi), kenarlıklar 1.48:1 ile kayboluyordu (`--color-border` açıldı), yıkıcı metin 4.48:1 ile eşiğin altındaydı (`--color-destructive-bright`), avatar bağlantıları 40×19px'e çökmüştü (`inline-flex`), anahtar ve sayaç düğmeleri 44px'in altındaydı.
 
+### Denetimin göremediği
+
+Bu ölçümler geçtikten sonra bile arayüz soluk görünüyordu. Sebep: WCAG eşiğini geçmek okunaklı olmak demek değil. İkincil metin `#94A3B8` ile 6.57:1'de kalıyordu ve çoğu yerde 10–11px'e basılıyordu; toplamı telefonda yıkanmış görünüyordu.
+
+Yapılanlar: `--color-muted-foreground` `#B3C0D4`'e açıldı (kartta 9.15:1), 12px altındaki bütün sınıflar kaldırıldı, şarkı/sanatçı gibi bilgi taşıyan ikincil satırlar 14px'e çıkarıldı, kenarlıklar `/60`–`/70` opaklıktan tam tona geçti. Uyum halkasındaki "UYUM" etiketi satır içi stille 7px'e düşüyordu — sınıf tabanlı taban onu yakalamıyordu, alt sınır 10px'e çekildi.
+
+Ders: kontrast oranı gerekli ama yeterli değil; punto ve opaklık da ölçülmeli.
+
 ## Uyum skoru nasıl hesaplanıyor
 
 `src/lib/match.ts` üç sinyali harmanlar:

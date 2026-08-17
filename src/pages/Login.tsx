@@ -33,7 +33,7 @@ export function Login() {
         </p>
       </div>
 
-      <div className="mt-8 rounded-2xl border border-border/70 bg-card p-5">
+      <div className="mt-8 rounded-2xl border border-border bg-card p-5">
         <h2 className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
           Hesap seç
         </h2>
@@ -50,7 +50,7 @@ export function Login() {
                   className={`flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition-colors duration-200 ${
                     active
                       ? 'border-accent bg-accent/10'
-                      : 'border-border/70 hover:bg-muted/60'
+                      : 'border-border hover:bg-muted/60'
                   }`}
                 >
                   <span className="min-w-0 flex-1">

@@ -27,7 +27,7 @@ const T = {
   card: '#1b1b30',
   muted: '#27273b',
   foreground: '#f8fafc',
-  mutedForeground: '#94a3b8',
+  mutedForeground: '#b3c0d4',
   accent: '#22c55e',
   onAccent: '#0f172a',
   secondary: '#4338ca',

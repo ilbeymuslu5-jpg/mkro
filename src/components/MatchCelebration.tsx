@@ -37,7 +37,7 @@ export function MatchCelebration() {
       aria-labelledby="match-title"
       className="fixed inset-0 z-50 grid place-items-center bg-background/85 p-4 backdrop-blur-sm"
     >
-      <div className="w-full max-w-sm animate-rise rounded-2xl border border-border/70 bg-card p-6 text-center shadow-2xl">
+      <div className="w-full max-w-sm animate-rise rounded-2xl border border-border bg-card p-6 text-center shadow-2xl">
         <p className="text-xs font-medium tracking-[0.2em] text-accent uppercase">eşleştiniz</p>
         <h2 id="match-title" className="mt-2 font-display text-2xl text-resilient">
           {other.name}

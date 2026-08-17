@@ -63,8 +63,8 @@ export function ReportDialog({ open, personName, onClose, onSubmit }: ReportDial
       aria-labelledby="report-title"
       className="fixed inset-0 z-50 grid place-items-end bg-background/85 backdrop-blur-sm sm:place-items-center sm:p-4"
     >
-      <div className="max-h-[92dvh] w-full overflow-y-auto rounded-t-2xl border border-border/70 bg-card sm:max-w-md sm:rounded-2xl">
-        <header className="flex items-center gap-3 border-b border-border/60 px-5 py-4">
+      <div className="max-h-[92dvh] w-full overflow-y-auto rounded-t-2xl border border-border bg-card sm:max-w-md sm:rounded-2xl">
+        <header className="flex items-center gap-3 border-b border-border px-5 py-4">
           <h2 id="report-title" className="flex-1 font-display text-lg text-resilient">
             {sent ? 'Şikayetin alındı' : `${personName} kişisini şikayet et`}
           </h2>
@@ -106,7 +106,7 @@ export function ReportDialog({ open, personName, onClose, onSubmit }: ReportDial
                       className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 text-sm transition-colors duration-200 ${
                         reason === option.value
                           ? 'border-accent bg-accent/10'
-                          : 'border-border/70 hover:bg-muted/60'
+                          : 'border-border hover:bg-muted/60'
                       }`}
                     >
                       <input

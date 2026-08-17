@@ -12,13 +12,13 @@ export function MiniPlayer() {
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-16 z-30 px-3 md:bottom-0 md:left-64 md:px-0">
-      <div className="pointer-events-auto mx-auto max-w-3xl overflow-hidden rounded-2xl border border-border/70 bg-card/95 shadow-2xl backdrop-blur md:mb-0 md:max-w-none md:rounded-none md:border-x-0 md:border-b-0">
+      <div className="pointer-events-auto mx-auto max-w-3xl overflow-hidden rounded-2xl border border-border bg-card/95 shadow-2xl backdrop-blur md:mb-0 md:max-w-none md:rounded-none md:border-x-0 md:border-b-0">
         <div className="flex items-center gap-3 p-2.5">
           <Artwork seed={trackId} label={item.title} className="size-11" />
 
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-resilient">{item.title}</p>
-            <p className="truncate text-xs text-muted-foreground text-resilient">
+            <p className="truncate text-sm text-muted-foreground text-resilient">
               {trackArtistName(trackId)}
             </p>
           </div>

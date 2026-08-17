@@ -38,14 +38,14 @@ export function AppShell() {
   return (
     <div className="min-h-dvh md:flex">
       {/* Desktop sidebar */}
-      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-border/60 bg-card/40 p-5 md:flex">
+      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-border bg-card/40 p-5 md:flex">
         <Wordmark />
         <nav className="mt-8 flex flex-col gap-1">
           {NAV.map((item) => (
             <SidebarLink key={item.to} item={item} badge={item.to === '/sohbetler' ? unreadCount : 0} />
           ))}
         </nav>
-        <div className="mt-6 border-t border-border/60 pt-4">
+        <div className="mt-6 border-t border-border pt-4">
           <nav className="flex flex-col gap-1">
             {SECONDARY_NAV.map((item) => (
               <SidebarLink key={item.to} item={item} badge={0} />
@@ -65,7 +65,7 @@ export function AppShell() {
       </div>
 
       {/* Mobile bottom nav */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-card/95 backdrop-blur md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur md:hidden">
         <ul className="grid grid-cols-5">
           {NAV.map((item) => (
             <li key={item.to}>
@@ -113,7 +113,7 @@ function TabLink({ item, badge }: { item: NavItem; badge: number }) {
     <NavLink
       to={item.to}
       className={({ isActive }) =>
-        `flex flex-col items-center gap-1 py-2.5 text-[11px] transition-colors duration-200 ${
+        `flex flex-col items-center gap-1 py-2.5 text-xs transition-colors duration-200 ${
           isActive ? 'text-accent' : 'text-muted-foreground'
         }`
       }
@@ -133,7 +133,7 @@ function TabLink({ item, badge }: { item: NavItem; badge: number }) {
 
 function Badge({ count }: { count: number }) {
   return (
-    <span className="ml-auto grid min-w-5 place-items-center rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-semibold text-on-accent tabular-nums">
+    <span className="ml-auto grid min-w-5 place-items-center rounded-full bg-accent px-1.5 py-0.5 text-xs font-semibold text-on-accent tabular-nums">
       {count > 9 ? '9+' : count}
       <span className="sr-only">okunmamış</span>
     </span>

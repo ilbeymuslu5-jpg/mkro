@@ -54,13 +54,13 @@ export function TrackRow({ trackId, index, shared }: TrackRowProps) {
         >
           {item.title}
         </span>
-        <span className="block truncate text-xs text-muted-foreground text-resilient">
+        <span className="block truncate text-sm text-muted-foreground text-resilient">
           {trackArtistName(trackId)}
         </span>
       </span>
 
       {shared && (
-        <span className="hidden shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-medium text-accent sm:inline">
+        <span className="hidden shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent sm:inline">
           ortak
         </span>
       )}

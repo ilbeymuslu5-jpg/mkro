@@ -21,7 +21,9 @@
   --color-accent: #22c55e;
   --color-on-accent: #0f172a;
   --color-muted: #27273b;
-  --color-muted-foreground: #94a3b8;
+  /* Brightened from #94A3B8. That value cleared WCAG AA on paper but read as
+     washed out on a phone, especially at the small sizes secondary text uses. */
+  --color-muted-foreground: #b3c0d4;
   /* Lightened from #312E81, which sat at 1.48:1 against the card — borders
      were effectively invisible, and most are drawn at 60–70% opacity on top
      of that. */

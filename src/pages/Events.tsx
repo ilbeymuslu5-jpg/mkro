@@ -60,7 +60,7 @@ function EventCard({ event, topArtistIds }: { event: MusicEvent; topArtistIds: s
       : `${event.attendeeIds.length} kişi gidiyor`
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-border/70 bg-card">
+    <article className="overflow-hidden rounded-2xl border border-border bg-card">
       <div className="flex items-start gap-4 p-4">
         <Artwork seed={event.id} label={event.title} className="size-16" />
 
@@ -68,7 +68,7 @@ function EventCard({ event, topArtistIds }: { event: MusicEvent; topArtistIds: s
           <div className="flex items-start justify-between gap-2">
             <h2 className="font-display text-lg leading-tight text-resilient">{event.title}</h2>
             {forYou && (
-              <span className="shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-medium text-accent">
+              <span className="shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent">
                 sana özel
               </span>
             )}
@@ -106,7 +106,7 @@ function EventCard({ event, topArtistIds }: { event: MusicEvent; topArtistIds: s
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 bg-muted/30 px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-muted/30 px-4 py-3">
         <div className="flex min-w-0 items-center gap-2">
           <Users className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
           <ul className="flex -space-x-2">

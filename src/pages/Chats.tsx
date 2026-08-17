@@ -25,7 +25,7 @@ export function Chats() {
     return (
       <div>
         <PageHeader title="Sohbetler" />
-        <div className="rounded-2xl border border-border/70 bg-card p-8 text-center">
+        <div className="rounded-2xl border border-border bg-card p-8 text-center">
           <p className="font-display text-lg">Henüz eşleşmen yok</p>
           <p className="mx-auto mt-2 max-w-sm text-sm text-balance text-muted-foreground">
             Keşfet'te beğendiğin kişi seni de beğenirse sohbet burada başlar.
@@ -66,12 +66,12 @@ export function Chats() {
                       {other.name}
                     </span>
                     {last && (
-                      <span className="shrink-0 text-[11px] text-muted-foreground">
+                      <span className="shrink-0 text-xs text-muted-foreground">
                         {relativeTime(last.sentAt)}
                       </span>
                     )}
                   </span>
-                  <span className="mt-0.5 block truncate text-xs text-muted-foreground text-resilient">
+                  <span className="mt-0.5 block truncate text-sm text-muted-foreground text-resilient">
                     {last
                       ? last.trackId
                         ? `♪ ${track(last.trackId).title} — ${trackArtistName(last.trackId)}`

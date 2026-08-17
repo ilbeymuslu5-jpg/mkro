@@ -53,7 +53,7 @@ export function ChatDetail() {
 
   if (!other || !matchedIds.includes(other.id)) {
     return (
-      <div className="rounded-2xl border border-border/70 bg-card p-8 text-center">
+      <div className="rounded-2xl border border-border bg-card p-8 text-center">
         <p className="font-display text-lg">Bu sohbet açık değil</p>
         <Link
           to="/sohbetler"
@@ -79,7 +79,7 @@ export function ChatDetail() {
 
   return (
     <div className="flex min-h-[calc(100dvh-11.5rem)] flex-col md:min-h-[calc(100dvh-9.5rem)]">
-      <header className="mb-4 flex items-center gap-3 border-b border-border/60 pb-4">
+      <header className="mb-4 flex items-center gap-3 border-b border-border pb-4">
         <Link
           to="/sohbetler"
           aria-label="Sohbetlere dön"
@@ -115,7 +115,7 @@ export function ChatDetail() {
             )}
             <time
               dateTime={new Date(message.sentAt).toISOString()}
-              className="mt-1 block text-[10px] opacity-60"
+              className="mt-1 block text-xs opacity-60"
             >
               {TIME.format(message.sentAt)}
             </time>
@@ -125,7 +125,7 @@ export function ChatDetail() {
       </div>
 
       {pickerOpen && (
-        <div className="mt-4 rounded-2xl border border-border/70 bg-card p-3">
+        <div className="mt-4 rounded-2xl border border-border bg-card p-3">
           <p className="mb-2 text-xs font-medium tracking-wider text-muted-foreground uppercase">
             Şarkı gönder
           </p>
@@ -187,7 +187,7 @@ export function ChatDetail() {
           event.preventDefault()
           submit()
         }}
-        className="sticky bottom-20 mt-3 flex items-center gap-2 rounded-2xl border border-border/70 bg-card p-2 md:bottom-4"
+        className="sticky bottom-20 mt-3 flex items-center gap-2 rounded-2xl border border-border bg-card p-2 md:bottom-4"
       >
         <button
           type="button"
@@ -265,7 +265,7 @@ function SharedTrack({ trackId }: { trackId: string }) {
 function GeneratedSong({ generated }: { generated: GeneratedTrack }) {
   return (
     <div className="min-w-0">
-      <p className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wider uppercase opacity-80">
+      <p className="flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase opacity-80">
         <Sparkles className="size-3" aria-hidden="true" />
         yapay zeka şarkısı
       </p>

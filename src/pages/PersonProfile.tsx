@@ -39,7 +39,7 @@ export function PersonProfile() {
         Geri
       </button>
 
-      <section className="rounded-2xl border border-border/70 bg-card p-5">
+      <section className="rounded-2xl border border-border bg-card p-5">
         {/* Identity row first, bio at full width below — same reason as Keşfet. */}
         <div className="flex items-center gap-4">
           <Avatar seed={other.id} name={other.name} size="lg" online={other.online} />
@@ -174,7 +174,7 @@ export function PersonProfile() {
 
 function NotFound() {
   return (
-    <div className="rounded-2xl border border-border/70 bg-card p-8 text-center">
+    <div className="rounded-2xl border border-border bg-card p-8 text-center">
       <p className="font-display text-lg">Bu profil bulunamadı</p>
       <Link
         to="/kesfet"

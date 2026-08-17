@@ -68,7 +68,7 @@ export function Welcome() {
 
       <section className="grid gap-4 sm:grid-cols-2">
         {FEATURES.map(({ icon: Icon, title, body }) => (
-          <article key={title} className="rounded-2xl border border-border/70 bg-card p-5">
+          <article key={title} className="rounded-2xl border border-border bg-card p-5">
             <Icon className="size-6 text-accent" aria-hidden="true" />
             <h2 className="mt-3 font-display text-lg text-resilient">{title}</h2>
             <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground text-resilient">
@@ -78,7 +78,7 @@ export function Welcome() {
         ))}
       </section>
 
-      <section className="mt-16 rounded-2xl border border-border/70 bg-card p-8 text-center md:mt-24">
+      <section className="mt-16 rounded-2xl border border-border bg-card p-8 text-center md:mt-24">
         <h2 className="font-display text-2xl text-balance">Çalma listen zaten seni anlatıyor</h2>
         <Link
           to="/giris"

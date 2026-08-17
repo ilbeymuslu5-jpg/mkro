@@ -48,8 +48,8 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
       aria-labelledby="settings-title"
       className="fixed inset-0 z-50 grid place-items-end bg-background/85 backdrop-blur-sm sm:place-items-center sm:p-4"
     >
-      <div className="max-h-[92dvh] w-full overflow-y-auto rounded-t-2xl border border-border/70 bg-card sm:max-w-md sm:rounded-2xl">
-        <header className="sticky top-0 flex items-center gap-3 border-b border-border/60 bg-card px-5 py-4">
+      <div className="max-h-[92dvh] w-full overflow-y-auto rounded-t-2xl border border-border bg-card sm:max-w-md sm:rounded-2xl">
+        <header className="sticky top-0 flex items-center gap-3 border-b border-border bg-card px-5 py-4">
           <h2 id="settings-title" className="flex-1 font-display text-lg">
             Ayarlar
           </h2>
@@ -128,7 +128,7 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
                 logout()
                 onClose()
               }}
-              className="mt-2 flex w-full items-center gap-2.5 rounded-xl border border-border/70 px-3 py-3 text-sm font-medium transition-colors duration-200 hover:bg-muted"
+              className="mt-2 flex w-full items-center gap-2.5 rounded-xl border border-border px-3 py-3 text-sm font-medium transition-colors duration-200 hover:bg-muted"
             >
               <LogOut className="size-4 shrink-0" aria-hidden="true" />
               Spotify bağlantısını kes

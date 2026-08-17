@@ -87,7 +87,7 @@ function Deck({ board }: { board: LiveCandidate[] }) {
         <div
           key={entry.personId}
           aria-hidden="true"
-          className="absolute inset-x-0 top-0 h-72 rounded-2xl border border-border/50 bg-card/60"
+          className="absolute inset-x-0 top-0 h-72 rounded-2xl border border-border bg-card/60"
           style={{
             transform: `translateY(${(index + 1) * 10}px) scale(${1 - (index + 1) * 0.03})`,
             zIndex: -1,
@@ -104,7 +104,7 @@ function Deck({ board }: { board: LiveCandidate[] }) {
           type="button"
           onClick={() => swipeLive(top.personId, 'pass')}
           aria-label={`${person(top.personId).name} kişisini geç`}
-          className="grid size-14 place-items-center rounded-full border border-border/70 bg-card text-muted-foreground transition-all duration-200 hover:scale-105 hover:border-destructive/60 hover:text-destructive-bright active:scale-95"
+          className="grid size-14 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-all duration-200 hover:scale-105 hover:border-destructive/60 hover:text-destructive-bright active:scale-95"
         >
           <X className="size-6" aria-hidden="true" />
         </button>
@@ -127,7 +127,7 @@ function BoardCard({ entry, me }: { entry: LiveCandidate; me: Parameters<typeof 
   const match = compatibility(me, other)
 
   return (
-    <article className="animate-rise overflow-hidden rounded-2xl border border-border/70 bg-card select-none">
+    <article className="animate-rise overflow-hidden rounded-2xl border border-border bg-card select-none">
       <div className="flex items-center gap-2 bg-accent/10 px-5 py-2.5">
         <Radio className="size-3.5 shrink-0 text-accent" aria-hidden="true" />
         <p className="truncate text-xs font-medium tracking-wider text-accent uppercase">
@@ -154,7 +154,7 @@ function BoardCard({ entry, me }: { entry: LiveCandidate; me: Parameters<typeof 
         </p>
       </div>
 
-      <div className="flex items-start gap-2 border-t border-border/60 px-5 py-3">
+      <div className="flex items-start gap-2 border-t border-border px-5 py-3">
         <Sparkles className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden="true" />
         <p className="text-sm text-accent text-resilient">{match.headline}</p>
       </div>
@@ -184,7 +184,7 @@ function BoardCard({ entry, me }: { entry: LiveCandidate; me: Parameters<typeof 
 
         <Link
           to={`/kisi/${other.id}`}
-          className="block rounded-xl border border-border/70 px-4 py-2.5 text-center text-sm font-medium transition-colors duration-200 hover:bg-muted"
+          className="block rounded-xl border border-border px-4 py-2.5 text-center text-sm font-medium transition-colors duration-200 hover:bg-muted"
         >
           Profilin tamamını gör
         </Link>
@@ -203,7 +203,7 @@ function Empty({
   action?: React.ReactNode
 }) {
   return (
-    <div className="rounded-2xl border border-border/70 bg-card p-8 text-center">
+    <div className="rounded-2xl border border-border bg-card p-8 text-center">
       <p className="font-display text-lg text-balance">{title}</p>
       <p className="mx-auto mt-2 max-w-sm text-sm text-balance text-muted-foreground">{body}</p>
       {action}

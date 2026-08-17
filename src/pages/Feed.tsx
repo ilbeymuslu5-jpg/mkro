@@ -34,7 +34,7 @@ export function Feed() {
       <Composer />
 
       {visible.length === 0 ? (
-        <p className="mt-6 rounded-2xl border border-border/70 bg-card p-8 text-center text-sm text-muted-foreground">
+        <p className="mt-6 rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
           Akış boş. İlk gönderiyi sen yaz.
         </p>
       ) : (
@@ -64,7 +64,7 @@ function Composer() {
         createPost({ trackId, text })
         setText('')
       }}
-      className="rounded-2xl border border-border/70 bg-card p-4"
+      className="rounded-2xl border border-border bg-card p-4"
     >
       <div className="flex gap-3">
         <Avatar seed="me" name={me.name} size="sm" photo={photo} />
@@ -78,7 +78,7 @@ function Composer() {
         />
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
+      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
         <label className="flex min-w-0 flex-1 items-center gap-2">
           <Music2 className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
           <span className="sr-only">Şarkı seç</span>
@@ -123,7 +123,7 @@ function PostCard({ post }: { post: Post }) {
   const item = track(post.trackId)
 
   return (
-    <article className="rounded-2xl border border-border/70 bg-card p-4">
+    <article className="rounded-2xl border border-border bg-card p-4">
       <header className="flex items-center gap-3">
         {mine ? (
           <Avatar seed="me" name={me.name} size="sm" photo={photo} />
@@ -208,7 +208,7 @@ function PostCard({ post }: { post: Post }) {
       </div>
 
       {showComments && (
-        <div className="mt-3 border-t border-border/60 pt-3">
+        <div className="mt-3 border-t border-border pt-3">
           <ul className="space-y-2.5">
             {post.comments.map((comment) => {
               const commenter =

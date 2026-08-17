@@ -29,14 +29,14 @@ export function Profile() {
             type="button"
             onClick={() => setSettingsOpen(true)}
             aria-label="Ayarları aç"
-            className="grid size-10 place-items-center rounded-xl border border-border/70 text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
+            className="grid size-10 place-items-center rounded-xl border border-border text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
           >
             <Settings className="size-5" aria-hidden="true" />
           </button>
         }
       />
 
-      <section className="rounded-2xl border border-border/70 bg-card p-5">
+      <section className="rounded-2xl border border-border bg-card p-5">
         <PhotoPicker />
 
         {plan === 'platinum' && (
@@ -48,7 +48,7 @@ export function Profile() {
 
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground text-resilient">{me.bio}</p>
 
-        <dl className="mt-5 grid grid-cols-3 gap-3 border-t border-border/60 pt-4">
+        <dl className="mt-5 grid grid-cols-3 gap-3 border-t border-border pt-4">
           <Stat label="Eşleşme" value={matchedIds.length} />
           <Stat label="Sanatçı" value={me.topArtistIds.length} />
           <Stat label="Tür" value={me.genres.length} />
@@ -98,7 +98,7 @@ export function Profile() {
           <li>
             <Link
               to="/anlik"
-              className="flex items-center gap-3 rounded-xl border border-border/70 bg-card px-4 py-3 text-sm font-medium transition-colors duration-200 hover:bg-muted/60"
+              className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium transition-colors duration-200 hover:bg-muted/60"
             >
               <Radio className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
               Anlık eşleşme
@@ -107,7 +107,7 @@ export function Profile() {
           <li>
             <Link
               to="/etkinlikler"
-              className="flex items-center gap-3 rounded-xl border border-border/70 bg-card px-4 py-3 text-sm font-medium transition-colors duration-200 hover:bg-muted/60"
+              className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium transition-colors duration-200 hover:bg-muted/60"
             >
               <CalendarDays className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
               Etkinlikler
@@ -136,7 +136,7 @@ export function Profile() {
                 <li key={id}>
                   <Link
                     to={`/kisi/${id}`}
-                    className="flex flex-col items-center gap-2 rounded-2xl border border-border/70 bg-card p-4 text-center transition-colors duration-200 hover:bg-muted/50"
+                    className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-4 text-center transition-colors duration-200 hover:bg-muted/50"
                   >
                     <Avatar seed={id} name={other.name} size="lg" online={other.online} />
                     <span className="w-full truncate text-sm font-medium text-resilient">

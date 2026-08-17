@@ -39,7 +39,7 @@ export function Discover() {
           <div
             key={id}
             aria-hidden="true"
-            className="absolute inset-x-0 top-0 rounded-2xl border border-border/50 bg-card/60"
+            className="absolute inset-x-0 top-0 rounded-2xl border border-border bg-card/60"
             style={{
               height: 320,
               transform: `translateY(${(index + 1) * 10}px) scale(${1 - (index + 1) * 0.03})`,
@@ -52,7 +52,7 @@ export function Discover() {
           key={currentId}
           onSwipe={(direction) => (direction === 'like' ? like(currentId) : pass(currentId))}
         >
-          <article className="animate-rise overflow-hidden rounded-2xl border border-border/70 bg-card select-none">
+          <article className="animate-rise overflow-hidden rounded-2xl border border-border bg-card select-none">
           <div className="p-5">
             {/* At 375px the bio needs the full width, so it drops below the identity row. */}
             <div className="flex items-center gap-4">
@@ -75,7 +75,7 @@ export function Discover() {
             </p>
           </div>
 
-          <div className="flex items-start gap-2 border-t border-border/60 bg-accent/5 px-5 py-3">
+          <div className="flex items-start gap-2 border-t border-border bg-accent/5 px-5 py-3">
             <Sparkles className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden="true" />
             <p className="text-sm text-accent text-resilient">{match.headline}</p>
           </div>
@@ -116,7 +116,7 @@ export function Discover() {
 
             <Link
               to={`/kisi/${current.id}`}
-              className="block rounded-xl border border-border/70 px-4 py-2.5 text-center text-sm font-medium transition-colors duration-200 hover:bg-muted"
+              className="block rounded-xl border border-border px-4 py-2.5 text-center text-sm font-medium transition-colors duration-200 hover:bg-muted"
             >
               Profilin tamamını gör
             </Link>
@@ -130,7 +130,7 @@ export function Discover() {
           type="button"
           onClick={() => pass(currentId)}
           aria-label={`${current.name} kişisini geç`}
-          className="grid size-14 place-items-center rounded-full border border-border/70 bg-card text-muted-foreground transition-all duration-200 hover:scale-105 hover:border-destructive/60 hover:text-destructive-bright active:scale-95"
+          className="grid size-14 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-all duration-200 hover:scale-105 hover:border-destructive/60 hover:text-destructive-bright active:scale-95"
         >
           <X className="size-6" aria-hidden="true" />
         </button>
@@ -155,7 +155,7 @@ function EmptyQueue({ onReset }: { onReset: () => void }) {
       <div className="mb-5">
         <LiveMatch />
       </div>
-      <div className="rounded-2xl border border-border/70 bg-card p-8 text-center">
+      <div className="rounded-2xl border border-border bg-card p-8 text-center">
         <p className="font-display text-lg">Sıradaki herkesi gördün</p>
         <p className="mx-auto mt-2 max-w-sm text-sm text-balance text-muted-foreground">
           Yeni kişiler geldiğinde burada olacaklar. Bu arada eşleştiklerinle sohbete başlayabilirsin.

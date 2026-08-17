@@ -94,13 +94,13 @@ function PopularTile({
           )}
         </span>
 
-        <span className="absolute top-2 left-2 flex items-center gap-1 rounded-full bg-black/65 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
+        <span className="absolute top-2 left-2 flex items-center gap-1 rounded-full bg-black/65 px-2 py-1 text-xs font-semibold text-white backdrop-blur-sm">
           <Users className="size-3" aria-hidden="true" />
           <span className="tabular-nums">{listenerCount}</span>
         </span>
 
         {inYourTop && (
-          <span className="absolute right-2 bottom-2 rounded-full bg-accent px-2 py-0.5 text-[11px] font-semibold text-on-accent">
+          <span className="absolute right-2 bottom-2 rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-on-accent">
             listende
           </span>
         )}
@@ -115,14 +115,14 @@ function PopularTile({
           >
             {item.title}
           </span>
-          <span className="block truncate text-xs text-muted-foreground text-resilient">
+          <span className="block truncate text-sm text-muted-foreground text-resilient">
             {trackArtistName(trackId)}
           </span>
         </span>
         {playingThis && <PlayingBars className="mt-1 shrink-0" />}
       </span>
 
-      <span className="mt-1 block text-xs text-accent">
+      <span className="mt-1 block text-sm text-accent">
         {listenerCount} kişiyle eşleşebilirsin
       </span>
     </button>
@@ -136,7 +136,7 @@ function SuggestionRow({ trackId, fromIds }: { trackId: string; fromIds: string[
   const shown = fromIds.slice(0, 3)
 
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card p-3">
+    <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
       <button
         type="button"
         onClick={() => play(trackId)}
@@ -165,7 +165,7 @@ function SuggestionRow({ trackId, fromIds }: { trackId: string; fromIds: string[
         >
           {item.title}
         </p>
-        <p className="truncate text-xs text-muted-foreground text-resilient">
+        <p className="truncate text-sm text-muted-foreground text-resilient">
           {trackArtistName(trackId)} · {formatDuration(item.durationSec)}
         </p>
 
