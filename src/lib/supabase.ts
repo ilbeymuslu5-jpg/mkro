@@ -1,11 +1,10 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { isSupabaseConfigured } from './supabaseConfig'
 
 const URL = import.meta.env.VITE_SUPABASE_URL ?? ''
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ?? ''
 
-export function isSupabaseConfigured(): boolean {
-  return URL.length > 0 && ANON_KEY.length > 0
-}
+export { isSupabaseConfigured }
 
 /**
  * Null until the project is configured. Every caller must handle that — the

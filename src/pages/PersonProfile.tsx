@@ -10,8 +10,8 @@ import { compatibility } from '@/lib/match'
 import { useSocial } from '@/state/SocialContext'
 import { useMe } from '@/state/AuthContext'
 import { ReportDialog } from '@/components/ReportDialog'
-import { reportUser, type ReportReason } from '@/services/db'
-import { isSupabaseConfigured } from '@/lib/supabase'
+import type { ReportReason } from '@/services/db'
+import { isSupabaseConfigured } from '@/lib/supabaseConfig'
 
 export function PersonProfile() {
   const { personId = '' } = useParams()
@@ -114,6 +114,8 @@ export function PersonProfile() {
           if (!isSupabaseConfigured()) {
             throw new Error('Şikayet kaydı için Supabase yapılandırılmalı.')
           }
+          // Loaded on demand so the SDK stays out of the initial bundle.
+          const { reportUser } = await import('@/services/db')
           await reportUser({
             reporterId: 'me',
             reportedId: other.id,
