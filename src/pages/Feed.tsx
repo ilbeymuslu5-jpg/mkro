@@ -85,7 +85,7 @@ function Composer() {
           <select
             value={trackId}
             onChange={(event) => setTrackId(event.target.value)}
-            className="min-w-0 flex-1 rounded-lg bg-muted px-2 py-1.5 text-xs outline-none"
+            className="min-h-10 min-w-0 flex-1 rounded-lg bg-muted px-2 py-2 text-xs outline-none"
           >
             {me.topTrackIds.map((id) => (
               <option key={id} value={id}>
@@ -98,7 +98,7 @@ function Composer() {
         <button
           type="submit"
           disabled={text.trim().length === 0}
-          className="shrink-0 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-transform duration-200 hover:scale-105 active:scale-95 disabled:scale-100 disabled:bg-muted disabled:text-muted-foreground"
+          className="min-h-10 shrink-0 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-transform duration-200 hover:scale-105 active:scale-95 disabled:scale-100 disabled:bg-muted disabled:text-muted-foreground"
         >
           Paylaş
         </button>
@@ -150,7 +150,7 @@ function PostCard({ post }: { post: Post }) {
             type="button"
             onClick={() => deletePost(post.id)}
             aria-label="Gönderiyi sil"
-            className="grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-destructive"
+            className="grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-destructive-bright"
           >
             <Trash2 className="size-4" aria-hidden="true" />
           </button>
@@ -186,7 +186,7 @@ function PostCard({ post }: { post: Post }) {
           type="button"
           onClick={() => toggleLike(post.id)}
           aria-pressed={liked}
-          className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors duration-200 ${
+          className={`flex min-h-11 items-center gap-1.5 rounded-lg px-3 text-xs font-medium transition-colors duration-200 ${
             liked ? 'text-accent' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
           }`}
         >
@@ -199,7 +199,7 @@ function PostCard({ post }: { post: Post }) {
           type="button"
           onClick={() => setShowComments((open) => !open)}
           aria-expanded={showComments}
-          className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
+          className="flex min-h-11 items-center gap-1.5 rounded-lg px-3 text-xs font-medium text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
         >
           <MessageSquare className="size-4" aria-hidden="true" />
           <span className="tabular-nums">{post.comments.length}</span>
@@ -243,13 +243,13 @@ function PostCard({ post }: { post: Post }) {
               onChange={(event) => setCommentText(event.target.value)}
               placeholder="Yorum yaz…"
               aria-label="Yorum"
-              className="min-w-0 flex-1 rounded-xl bg-muted px-3 py-2 text-sm outline-none placeholder:text-muted-foreground"
+              className="min-h-11 min-w-0 flex-1 rounded-xl bg-muted px-3 py-2 text-sm outline-none placeholder:text-muted-foreground"
             />
             <button
               type="submit"
               disabled={commentText.trim().length === 0}
               aria-label="Yorumu gönder"
-              className="grid size-9 shrink-0 place-items-center rounded-full bg-accent text-on-accent transition-transform duration-200 hover:scale-105 active:scale-95 disabled:scale-100 disabled:bg-muted disabled:text-muted-foreground"
+              className="grid size-11 shrink-0 place-items-center rounded-full bg-accent text-on-accent transition-transform duration-200 hover:scale-105 active:scale-95 disabled:scale-100 disabled:bg-muted disabled:text-muted-foreground"
             >
               <Send className="size-4" aria-hidden="true" />
             </button>

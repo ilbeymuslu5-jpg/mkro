@@ -58,7 +58,7 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
             type="button"
             onClick={onClose}
             aria-label="Ayarları kapat"
-            className="grid size-9 place-items-center rounded-lg text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
+            className="grid size-11 place-items-center rounded-lg text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
           >
             <X className="size-5" aria-hidden="true" />
           </button>
@@ -106,7 +106,7 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
                       <button
                         type="button"
                         onClick={() => unblock(id)}
-                        className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium text-accent transition-colors duration-200 hover:bg-accent/15"
+                        className="min-h-11 shrink-0 rounded-lg px-3 text-xs font-medium text-accent transition-colors duration-200 hover:bg-accent/15"
                       >
                         Engeli kaldır
                       </button>
@@ -164,7 +164,7 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
               <button
                 type="button"
                 onClick={() => setConfirmingWipe(true)}
-                className="mt-2 flex w-full items-center gap-2.5 rounded-xl border border-destructive/50 px-3 py-3 text-sm font-medium text-destructive transition-colors duration-200 hover:bg-destructive/10"
+                className="mt-2 flex w-full items-center gap-2.5 rounded-xl border border-destructive/50 px-3 py-3 text-sm font-medium text-destructive-bright transition-colors duration-200 hover:bg-destructive/10"
               >
                 <Trash2 className="size-4 shrink-0" aria-hidden="true" />
                 Hesap verilerimi sil

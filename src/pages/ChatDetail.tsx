@@ -67,18 +67,23 @@ export function ChatDetail() {
 
   const match = compatibility(me, other)
 
+  /*
+    The wrapper fills what `main` leaves over (its padding plus the bottom nav),
+    so the composer sits at the bottom of the screen rather than floating
+    halfway up a short conversation.
+  */
   const submit = () => {
     sendMessage(other.id, { text: draft })
     setDraft('')
   }
 
   return (
-    <div className="flex min-h-[70dvh] flex-col">
+    <div className="flex min-h-[calc(100dvh-11.5rem)] flex-col md:min-h-[calc(100dvh-9.5rem)]">
       <header className="mb-4 flex items-center gap-3 border-b border-border/60 pb-4">
         <Link
           to="/sohbetler"
           aria-label="Sohbetlere dön"
-          className="-ml-2 grid size-9 place-items-center rounded-lg text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
+          className="-ml-2 grid size-11 place-items-center rounded-lg text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
         >
           <ArrowLeft className="size-5" aria-hidden="true" />
         </Link>
@@ -189,7 +194,7 @@ export function ChatDetail() {
           onClick={() => setPickerOpen((open) => !open)}
           aria-label="Şarkı gönder"
           aria-expanded={pickerOpen}
-          className={`grid size-10 shrink-0 place-items-center rounded-full transition-colors duration-200 ${
+          className={`grid size-11 shrink-0 place-items-center rounded-full transition-colors duration-200 ${
             pickerOpen ? 'bg-accent text-on-accent' : 'text-muted-foreground hover:bg-muted'
           }`}
         >
@@ -201,14 +206,14 @@ export function ChatDetail() {
           onChange={(event) => setDraft(event.target.value)}
           placeholder="Bir şeyler yaz…"
           aria-label="Mesaj"
-          className="min-w-0 flex-1 bg-transparent px-1 text-sm outline-none placeholder:text-muted-foreground"
+          className="min-h-11 min-w-0 flex-1 bg-transparent px-1 text-sm outline-none placeholder:text-muted-foreground"
         />
 
         <button
           type="submit"
           disabled={draft.trim().length === 0}
           aria-label="Gönder"
-          className="grid size-10 shrink-0 place-items-center rounded-full bg-accent text-on-accent transition-all duration-200 hover:scale-105 active:scale-95 disabled:scale-100 disabled:bg-muted disabled:text-muted-foreground"
+          className="grid size-11 shrink-0 place-items-center rounded-full bg-accent text-on-accent transition-all duration-200 hover:scale-105 active:scale-95 disabled:scale-100 disabled:bg-muted disabled:text-muted-foreground"
         >
           <Send className="size-4" aria-hidden="true" />
         </button>

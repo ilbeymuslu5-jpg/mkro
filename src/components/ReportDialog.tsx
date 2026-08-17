@@ -73,7 +73,7 @@ export function ReportDialog({ open, personName, onClose, onSubmit }: ReportDial
             type="button"
             onClick={onClose}
             aria-label="Kapat"
-            className="grid size-9 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
+            className="grid size-11 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
           >
             <X className="size-5" aria-hidden="true" />
           </button>
@@ -139,7 +139,7 @@ export function ReportDialog({ open, personName, onClose, onSubmit }: ReportDial
             </label>
 
             {error && (
-              <p role="alert" className="flex items-start gap-2 text-sm text-destructive text-resilient">
+              <p role="alert" className="flex items-start gap-2 text-sm text-destructive-bright text-resilient">
                 <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
                 {error}
               </p>

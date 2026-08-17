@@ -99,7 +99,7 @@ export function Login() {
         </button>
 
         {error && (
-          <p role="alert" className="mt-3 text-sm text-destructive text-resilient">
+          <p role="alert" className="mt-3 text-sm text-destructive-bright text-resilient">
             {error}
           </p>
         )}

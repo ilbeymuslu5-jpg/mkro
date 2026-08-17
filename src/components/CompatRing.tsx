@@ -2,7 +2,7 @@ import { scoreTone } from '@/lib/match'
 
 const TONE_CLASS = {
   high: 'text-accent',
-  mid: 'text-secondary',
+  mid: 'text-secondary-bright',
   low: 'text-muted-foreground',
 } as const
 

@@ -111,7 +111,7 @@ export function SwipeCard({ onSwipe, children, inert }: SwipeCardProps) {
       <span
         aria-hidden="true"
         style={{ opacity: passOpacity }}
-        className="pointer-events-none absolute top-5 right-5 flex items-center gap-1.5 rounded-xl border-2 border-destructive bg-background/80 px-3 py-1.5 font-display text-destructive"
+        className="pointer-events-none absolute top-5 right-5 flex items-center gap-1.5 rounded-xl border-2 border-destructive-bright bg-background/80 px-3 py-1.5 font-display text-destructive-bright"
       >
         <X className="size-4" />
         GEÇ

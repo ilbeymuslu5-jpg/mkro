@@ -15,13 +15,21 @@
   --color-on-primary: #ffffff;
   --color-secondary: #4338ca;
   --color-on-secondary: #ffffff;
+  /* Readable indigo for text and strokes. #4338CA only reaches 2.13:1 on the
+     card surface, which made mid-band compatibility scores unreadable. */
+  --color-secondary-bright: #818cf8;
   --color-accent: #22c55e;
   --color-on-accent: #0f172a;
   --color-muted: #27273b;
   --color-muted-foreground: #94a3b8;
-  --color-border: #312e81;
+  /* Lightened from #312E81, which sat at 1.48:1 against the card — borders
+     were effectively invisible, and most are drawn at 60–70% opacity on top
+     of that. */
+  --color-border: #4a4a70;
   --color-destructive: #ef4444;
   --color-on-destructive: #000000;
+  /* Destructive as text: #EF4444 lands at 4.48:1 on the card, just under. */
+  --color-destructive-bright: #f87171;
   --color-ring: #ffffff;
 
   /*

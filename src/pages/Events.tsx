@@ -112,7 +112,11 @@ function EventCard({ event, topArtistIds }: { event: MusicEvent; topArtistIds: s
           <ul className="flex -space-x-2">
             {event.attendeeIds.map((id) => (
               <li key={id}>
-                <Link to={`/kisi/${id}`} aria-label={`${person(id).name} profiline git`}>
+                <Link
+                  to={`/kisi/${id}`}
+                  aria-label={`${person(id).name} profiline git`}
+                  className="inline-flex"
+                >
                   <Avatar seed={id} name={person(id).name} size="sm" className="ring-2 ring-card" />
                 </Link>
               </li>

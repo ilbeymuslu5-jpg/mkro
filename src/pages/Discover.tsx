@@ -130,7 +130,7 @@ export function Discover() {
           type="button"
           onClick={() => pass(currentId)}
           aria-label={`${current.name} kişisini geç`}
-          className="grid size-14 place-items-center rounded-full border border-border/70 bg-card text-muted-foreground transition-all duration-200 hover:scale-105 hover:border-destructive/60 hover:text-destructive active:scale-95"
+          className="grid size-14 place-items-center rounded-full border border-border/70 bg-card text-muted-foreground transition-all duration-200 hover:scale-105 hover:border-destructive/60 hover:text-destructive-bright active:scale-95"
         >
           <X className="size-6" aria-hidden="true" />
         </button>

@@ -173,7 +173,11 @@ function SuggestionRow({ trackId, fromIds }: { trackId: string; fromIds: string[
           <ul className="flex -space-x-2">
             {shown.map((id) => (
               <li key={id}>
-                <Link to={`/kisi/${id}`} aria-label={`${person(id).name} profiline git`}>
+                <Link
+                  to={`/kisi/${id}`}
+                  aria-label={`${person(id).name} profiline git`}
+                  className="inline-flex"
+                >
                   <Avatar seed={id} name={person(id).name} size="sm" className="ring-2 ring-card" />
                 </Link>
               </li>

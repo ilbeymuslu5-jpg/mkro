@@ -34,7 +34,7 @@ export function Welcome() {
         <Wordmark />
         <Link
           to="/giris"
-          className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-on-accent transition-transform duration-200 hover:scale-[1.03] active:scale-95"
+          className="inline-flex min-h-11 items-center rounded-xl bg-accent px-4 text-sm font-semibold text-on-accent transition-transform duration-200 hover:scale-[1.03] active:scale-95"
         >
           Başla
         </Link>

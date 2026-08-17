@@ -4,6 +4,7 @@ import { Avatar } from '@/components/Avatar'
 import { CompatRing } from '@/components/CompatRing'
 import { PageHeader } from '@/components/PageHeader'
 import { SwipeCard } from '@/components/SwipeCard'
+import { Switch } from '@/components/Switch'
 import { artist, GENRE_LABEL, track, trackArtistName } from '@/data/catalog'
 import { person } from '@/data/people'
 import { compatibility } from '@/lib/match'
@@ -27,22 +28,7 @@ export function LiveBoard() {
             : 'Şu an bir şey çalmıyor'
         }
         action={
-          <button
-            type="button"
-            role="switch"
-            aria-checked={liveOn}
-            onClick={toggleLiveMatch}
-            aria-label="Anlık eşleşmeyi aç kapa"
-            className={`relative h-7 w-12 shrink-0 rounded-full transition-colors duration-200 ${
-              liveOn ? 'bg-accent' : 'bg-muted'
-            }`}
-          >
-            <span
-              className={`absolute top-1 left-1 size-5 rounded-full bg-white transition-transform duration-200 ${
-                liveOn ? 'translate-x-5' : 'translate-x-0'
-              }`}
-            />
-          </button>
+<Switch checked={liveOn} onChange={toggleLiveMatch} label="Anlık eşleşmeyi aç kapa" />
         }
       />
 
@@ -118,7 +104,7 @@ function Deck({ board }: { board: LiveCandidate[] }) {
           type="button"
           onClick={() => swipeLive(top.personId, 'pass')}
           aria-label={`${person(top.personId).name} kişisini geç`}
-          className="grid size-14 place-items-center rounded-full border border-border/70 bg-card text-muted-foreground transition-all duration-200 hover:scale-105 hover:border-destructive/60 hover:text-destructive active:scale-95"
+          className="grid size-14 place-items-center rounded-full border border-border/70 bg-card text-muted-foreground transition-all duration-200 hover:scale-105 hover:border-destructive/60 hover:text-destructive-bright active:scale-95"
         >
           <X className="size-6" aria-hidden="true" />
         </button>

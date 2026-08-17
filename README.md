@@ -53,6 +53,18 @@ Bu sürüm yol tabanlı yönlendirme yerine hash yönlendirmesi kullanır (`#/ke
 
 `scripts/make-artifact.mjs` sarmalayıcı etiketleri ayıklar ve şunları doğrular: dış istek kalmamış, JS paketi gerçekten gömülmüş, `#root` yerinde, boyut sınırın altında. Bu kontroller olmasa paket sessizce düşebiliyor ve geriye boş bir sayfa kalıyor.
 
+## Denetim
+
+`audit.mjs` paleti ve arayüzü ölçer: token çiftlerinin kontrast oranları, her rotada yatay taşma, 375px'de 40px'in altındaki dokunma hedefleri, kırpılan metinler, console hataları. Her ekranın iki genişlikte ekran görüntüsünü de alır.
+
+```bash
+npm i -D playwright     # kayıtlı bağımlılık değil
+npm run dev             # başka bir terminalde
+node audit.mjs
+```
+
+Bu geçişte bulup düzelttikleri: orta bant uyum skoru 2.13:1 kontrastla okunmuyordu (`--color-secondary-bright` eklendi), kenarlıklar 1.48:1 ile kayboluyordu (`--color-border` açıldı), yıkıcı metin 4.48:1 ile eşiğin altındaydı (`--color-destructive-bright`), avatar bağlantıları 40×19px'e çökmüştü (`inline-flex`), anahtar ve sayaç düğmeleri 44px'in altındaydı.
+
 ## Uyum skoru nasıl hesaplanıyor
 
 `src/lib/match.ts` üç sinyali harmanlar:

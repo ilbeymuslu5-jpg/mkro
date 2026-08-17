@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { ChevronRight, Radio } from 'lucide-react'
+import { Switch } from './Switch'
 import { track } from '@/data/catalog'
 import { useAuth } from '@/state/AuthContext'
 import { useSocial } from '@/state/SocialContext'
@@ -30,22 +31,7 @@ export function LiveMatch() {
           </p>
         </div>
 
-        <button
-          type="button"
-          role="switch"
-          aria-checked={liveOn}
-          onClick={toggleLiveMatch}
-          aria-label="Anlık eşleşmeyi aç kapa"
-          className={`relative h-7 w-12 shrink-0 rounded-full transition-colors duration-200 ${
-            liveOn ? 'bg-accent' : 'bg-muted'
-          }`}
-        >
-          <span
-            className={`absolute top-1 left-1 size-5 rounded-full bg-white transition-transform duration-200 ${
-              liveOn ? 'translate-x-5' : 'translate-x-0'
-            }`}
-          />
-        </button>
+        <Switch checked={liveOn} onChange={toggleLiveMatch} label="Anlık eşleşmeyi aç kapa" />
       </div>
 
       {liveOn && (

@@ -33,7 +33,7 @@ export function PersonProfile() {
       <button
         type="button"
         onClick={() => navigate(-1)}
-        className="-ml-2 inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
+        className="-ml-2 inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
       >
         <ArrowLeft className="size-4" aria-hidden="true" />
         Geri
@@ -89,7 +89,7 @@ export function PersonProfile() {
                 block(other.id)
                 navigate('/kesfet')
               }}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:bg-destructive/10 hover:text-destructive"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:bg-destructive/10 hover:text-destructive-bright"
             >
               <ShieldOff className="size-4" aria-hidden="true" />
               Engelle
@@ -98,7 +98,7 @@ export function PersonProfile() {
             <button
               type="button"
               onClick={() => setReporting(true)}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:bg-destructive/10 hover:text-destructive"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:bg-destructive/10 hover:text-destructive-bright"
             >
               <Flag className="size-4" aria-hidden="true" />
               Şikayet et
