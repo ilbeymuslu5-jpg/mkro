@@ -53,6 +53,17 @@ Bu sürüm yol tabanlı yönlendirme yerine hash yönlendirmesi kullanır (`#/ke
 
 `scripts/make-artifact.mjs` sarmalayıcı etiketleri ayıklar ve şunları doğrular: dış istek kalmamış, JS paketi gerçekten gömülmüş, `#root` yerinde, boyut sınırın altında. Bu kontroller olmasa paket sessizce düşebiliyor ve geriye boş bir sayfa kalıyor.
 
+`scripts/verify-artifact.mjs` çıktıyı **düşmanca bir host** altında açar: sayfanın kendi CSS'inden önce enjekte edilen, katmansız bir `body { background:#fff; color:#111 }`. Katmansız kurallar `@layer` içindeki her şeyi yendiği için bu, gerçek ortamı taklit eder. Kontroller: `#root` doluyor mu, `body` kendi zeminini ve metin rengini boyayabiliyor mu, rengini miras alan metinler koyu zeminde okunuyor mu, dış istek var mı, yatay taşma var mı.
+
+```bash
+npm i -D playwright
+node scripts/verify-artifact.mjs
+```
+
+### Neden katmansız
+
+`body` renkleri `@layer base` içindeyken host'un katmansız `body` kuralı onları eziyordu: zemin beyaza dönüyor, rengini miras alan her şey — isimler, başlıklar, düz bağlantılar — koyu kartın üstünde neredeyse siyah kalıp kayboluyordu. Açık renk sınıfı taşıyanlar kurtuluyordu, o yüzden metinlerin yalnızca bir kısmı yok oluyordu. Düşmanca host altında ayakta kalması gereken kurallar `src/index.css` içinde katman **dışında** durur.
+
 ## Denetim
 
 `audit.mjs` paleti ve arayüzü ölçer: token çiftlerinin kontrast oranları, her rotada yatay taşma, 375px'de 40px'in altındaki dokunma hedefleri, kırpılan metinler, console hataları. Her ekranın iki genişlikte ekran görüntüsünü de alır.

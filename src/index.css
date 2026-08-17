@@ -67,18 +67,36 @@
   }
 }
 
+/*
+  Deliberately unlayered.
+
+  This app is also published as an artifact, where the host injects its own
+  unlayered `body { background; color }`. Unlayered CSS always wins over
+  anything in `@layer`, so keeping these in `@layer base` let the host repaint
+  the page: the ground went white and every element that inherits its colour —
+  names, headings, plain links — turned near-black on a dark card and vanished.
+  Elements carrying an explicit colour class survived, which is why only some
+  text disappeared.
+
+  Anything that must survive a hostile host belongs here, not in the layer.
+*/
+html {
+  color-scheme: dark;
+  -webkit-text-size-adjust: 100%;
+  background-color: var(--color-background);
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Wide rows scroll in their own container; the page itself never does. */
+  overflow-x: hidden;
+}
+
 @layer base {
-  html {
-    color-scheme: dark;
-    -webkit-text-size-adjust: 100%;
-  }
-
-  body {
-    @apply bg-background text-foreground font-sans antialiased;
-    /* Wide rows scroll in their own container; the page itself never does. */
-    overflow-x: hidden;
-  }
-
   /* Checklist: focus states must stay visible for keyboard navigation. */
   :focus-visible {
     outline: 2px solid var(--color-ring);
