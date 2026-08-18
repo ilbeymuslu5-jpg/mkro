@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Heart, Radio, Sparkles, X } from 'lucide-react'
+import { Heart, Radio, RotateCcw, Sparkles, X } from 'lucide-react'
 import { Avatar } from '@/components/Avatar'
 import { CompatRing } from '@/components/CompatRing'
 import { PageHeader } from '@/components/PageHeader'
@@ -17,7 +17,10 @@ const STEP_SECONDS = Math.round(LIVE_BOARD_INTERVAL_MS / 1000)
 
 export function Discover() {
   const { nowPlaying } = useAuth()
-  const { liveOn, liveBoard, liveExhausted, toggleLiveMatch } = useSocial()
+  const { liveOn, liveBoard, liveExhausted, toggleLiveMatch, swipesToday, swipeLimit } =
+    useSocial()
+
+  const outOfSwipes = swipesToday >= swipeLimit
 
   return (
     <div>
@@ -53,13 +56,37 @@ export function Discover() {
             </button>
           }
         />
+      ) : outOfSwipes ? (
+        <Empty
+          title="Bugünlük keşif hakkın doldu"
+          body={`Ücretsiz hesap günde ${swipeLimit} kaydırma yapabilir. Yarın sıfırlanır.`}
+          action={
+            <Link
+              to="/platinum"
+              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-on-accent transition-transform duration-200 hover:scale-[1.02] active:scale-95"
+            >
+              <Sparkles className="size-4" aria-hidden="true" />
+              Platinum ile sınırsız kaydır
+            </Link>
+          }
+        />
       ) : liveBoard.length === 0 ? (
         <Waiting exhausted={liveExhausted} trackTitle={track(nowPlaying.trackId).title} />
       ) : (
         <Deck board={liveBoard} />
       )}
 
-      {liveOn && nowPlaying && <Ticker count={liveBoard.length} exhausted={liveExhausted} />}
+      {liveOn && nowPlaying && !outOfSwipes && (
+        <Ticker count={liveBoard.length} exhausted={liveExhausted} />
+      )}
+
+      {liveOn && nowPlaying && <UndoBar />}
+
+      {liveOn && nowPlaying && Number.isFinite(swipeLimit) && (
+        <p className="mt-3 text-center text-sm text-muted-foreground text-resilient">
+          Bugün {swipesToday}/{swipeLimit} kaydırma
+        </p>
+      )}
     </div>
   )
 }
@@ -97,6 +124,31 @@ function Ticker({ count, exhausted }: { count: number; exhausted: boolean }) {
           style={{ width: exhausted ? '0%' : `${pct}%` }}
         />
       </div>
+    </div>
+  )
+}
+
+/**
+ * Sits outside the deck on purpose. Inside it, the control disappeared the
+ * moment the board emptied — which is exactly when a mis-swipe hurts most.
+ */
+function UndoBar() {
+  const { canUndo, undoLast, undosLeft } = useSocial()
+
+  return (
+    <div className="mt-4 flex justify-center">
+      <button
+        type="button"
+        onClick={undoLast}
+        disabled={!canUndo}
+        className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border px-4 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
+      >
+        <RotateCcw className="size-4" aria-hidden="true" />
+        Son kaydırmayı geri al
+        {Number.isFinite(undosLeft) && (
+          <span className="tabular-nums">({undosLeft})</span>
+        )}
+      </button>
     </div>
   )
 }

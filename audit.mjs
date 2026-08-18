@@ -68,7 +68,6 @@ for (const [label, fg, bg, min] of PAIRS) {
 const ROUTES = [
   ['welcome', '/'],
   ['kesfet', '/kesfet'],
-  ['anlik', '/anlik'],
   ['sosyal', '/sosyal'],
   ['muzik', '/muzik'],
   ['sohbetler', '/sohbetler'],

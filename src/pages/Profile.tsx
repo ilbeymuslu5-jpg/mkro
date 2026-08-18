@@ -10,6 +10,7 @@ import { useSocial } from '@/state/SocialContext'
 import { useMe } from '@/state/AuthContext'
 import { useProfile } from '@/state/ProfileContext'
 import { SettingsModal } from '@/components/SettingsModal'
+import { Admirers } from '@/components/Admirers'
 import { useState } from 'react'
 import { CalendarDays, Settings, Sparkles } from 'lucide-react'
 
@@ -91,6 +92,8 @@ export function Profile() {
           ))}
         </ul>
       </section>
+
+      <Admirers />
 
       <section>
         <h2 className="mb-3 font-display text-lg">Daha fazlası</h2>

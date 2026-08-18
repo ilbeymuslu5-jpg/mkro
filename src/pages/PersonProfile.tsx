@@ -116,8 +116,11 @@ export function PersonProfile() {
           }
           // Loaded on demand so the SDK stays out of the initial bundle.
           const { reportUser } = await import('@/services/db')
+          const { supabase } = await import('@/lib/supabase')
+          const { data } = (await supabase?.auth.getUser()) ?? { data: { user: null } }
+          if (!data.user) throw new Error('Şikayet göndermek için oturum açman gerekiyor.')
           await reportUser({
-            reporterId: 'me',
+            reporterId: data.user.id,
             reportedId: other.id,
             reason,
             detail,

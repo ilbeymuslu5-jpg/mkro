@@ -75,18 +75,3 @@ export function recommendationsFor(me: Person, pool: Person[] = PEOPLE): Recomme
     .map(([trackId, entry]) => ({ trackId, ...entry }))
     .sort((a, b) => b.weight - a.weight || a.trackId.localeCompare(b.trackId))
 }
-
-/**
- * People listening to the exact same track right now. The mock backend has no
- * presence feed, so "right now" is derived from whoever holds the track in
- * their top list, with online people first.
- *
- * Online is a sort key rather than a filter on purpose: filtering on it hid
- * people who plainly listen to the track — including the top match shown
- * directly beneath the empty state, which read as a bug.
- */
-export function listeningNow(trackId: string, pool: Person[] = PEOPLE): Person[] {
-  return pool
-    .filter((person) => person.topTrackIds.includes(trackId))
-    .sort((a, b) => Number(b.online) - Number(a.online))
-}

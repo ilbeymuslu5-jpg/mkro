@@ -15,7 +15,9 @@ Müzik zevkine göre insanlarla tanıştıran sosyal uygulamanın çalışan bir
 - **Şarkı önerileri** — zevkine en yakın kişilerin dinlediği, senin listende olmayan şarkılar
 - **Sosyal akış** — şarkılar hakkında gönderi yaz, başkalarınınkini beğen ve yorumla
 - **Yapay zeka şarkısı** — sohbette eşleşmeniz için şarkı üret; aşamalı ilerleme, iptal edilebilir
-- **Platinum** — paket karşılaştırması ve yükseltme ekranı (ödeme alınmaz)
+- **Geri alma** — yanlış kaydırmayı geri al; ücretsizde günde 1, Platinum'da sınırsız
+- **Seni beğenenler** — seni kimin beğendiği; ücretsizde sayı, Platinum'da isimler
+- **Platinum** — paket karşılaştırması ve yükseltme ekranı (ödeme alınmaz). Vaat ettiği üç sınır gerçekten uygulanır
 - **Ayarlar** — bağlı hesap, engellenen kişiler, hesap verilerini silme
 - **Etkinlikler** — dinlediğin sanatçıların konserleri, en sevdiğin sanatçıya göre sıralı
 - **Profil** — müzik pasaportun: sanatçılar, şarkılar, türler, eşleşmeler
@@ -116,6 +118,24 @@ Keşfet sabit bir listeyi sıralamaz. Radar açıkken (`LIVE_BOARD_INTERVAL_MS`,
 | 60 sn | **6** |
 
 Sayaç ve ilerleme çubuğu bir sonrakine kaç saniye kaldığını gösterir; ritim tahmin edilmek zorunda kalmaz.
+
+### Paket sınırları gerçek
+
+Platinum ekranı bir süre var olmayan özellikler satıyordu. Üçü de yazıldı ve `SocialContext` içinde uygulanıyor:
+
+| Vaat | Ücretsiz | Platinum |
+|---|---|---|
+| Günlük keşif | 10 kaydırma (`FREE_DAILY_SWIPES`) | Sınırsız |
+| Geri alma | Günde 1 (`FREE_UNDOS`) | Sınırsız |
+| Seni kimin beğendiğini gör | Sayı görünür, isimler bulanık | Açık, oradan beğenilebilir |
+
+Geri alma yalnızca kartı iade etmez: kaydırmanın yaptığı her şeyi geri sarar — verdikt, o kaydırmanın kurduğu eşleşme, sohbet, kutlama ve harcanan günlük hak. Yoksa geri aldığın halde kabul etmediğin bir eşleşme geride kalırdı.
+
+Düğme destenin **dışında** durur. İçindeyken son kart kaydırılınca birlikte kayboluyordu — yanlış kaydırmanın en can yaktığı an.
+
+İki günlük hak da `localStorage`'da tutulur. Geri alma hakkı yalnız bellekte dururken sayfayı yenilemek harcanmış hakkı geri veriyordu; kaydırma hakkı ise kalıcıydı. İki hak aynı şekilde davranmalı, aksi halde ücretli sınırın etrafından tek tuşla dolaşılıyordu.
+
+"Seni beğenenler" ayrı bir zar atışı değil: `like` fonksiyonunun karşılık verme kuralının aynısı, önceden gösterilmiş hali. Bu yüzden oradan beğenmek her zaman eşleşmeyle sonuçlanır.
 
 ### Dinleyici nereden geliyor
 
