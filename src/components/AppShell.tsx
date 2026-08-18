@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { CalendarDays, Compass, Disc3, MessageCircle, Newspaper, Radio, Sparkles, User } from 'lucide-react'
+import { CalendarDays, Compass, Disc3, MessageCircle, Newspaper, Sparkles, User } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { MiniPlayer } from './MiniPlayer'
 import { MatchCelebration } from './MatchCelebration'
@@ -22,7 +22,6 @@ const NAV: NavItem[] = [
 
 /** Reachable from the Profil page on mobile; shown outright on the sidebar. */
 const SECONDARY_NAV: NavItem[] = [
-  { to: '/anlik', label: 'Anlık eşleşme', icon: Radio },
   { to: '/etkinlikler', label: 'Etkinlikler', icon: CalendarDays },
   { to: '/platinum', label: 'Platinum', icon: Sparkles },
 ]

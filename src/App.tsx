@@ -6,7 +6,6 @@ import { Music } from '@/pages/Music'
 import { Feed } from '@/pages/Feed'
 import { Login } from '@/pages/Login'
 import { Platinum } from '@/pages/Platinum'
-import { LiveBoard } from '@/pages/LiveBoard'
 import { RequireAuth } from '@/components/RequireAuth'
 import { Chats } from '@/pages/Chats'
 import { ChatDetail } from '@/pages/ChatDetail'
@@ -22,7 +21,8 @@ export default function App() {
       <Route element={<RequireAuth />}>
         <Route element={<AppShell />}>
           <Route path="/kesfet" element={<Discover />} />
-          <Route path="/anlik" element={<LiveBoard />} />
+          {/* The board moved into Keşfet; keep old links working. */}
+          <Route path="/anlik" element={<Navigate to="/kesfet" replace />} />
           <Route path="/sosyal" element={<Feed />} />
           <Route path="/muzik" element={<Music />} />
           <Route path="/sohbetler" element={<Chats />} />

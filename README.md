@@ -8,13 +8,12 @@ Müzik zevkine göre insanlarla tanıştıran sosyal uygulamanın çalışan bir
 
 - **Spotify ile giriş** — sahte OAuth onay ekranı; hesap seç, izinleri gör, bağlan. Zevkin, sanatçıların ve şu an çalan parçan oradan gelir
 - **Müzik uyumu motoru** — iki kişinin en çok dinlediği sanatçı, şarkı ve türleri karşılaştırıp %42–99 bandında bir uyum skoru üretir
-- **Keşfet** — uyum sırasına dizilmiş kart destesi; ortak sanatçılar, ortak türler ve marş şarkısı kartın üstünde
+- **Keşfet** — Tinder gibi kaydırılan deste, ama havuz sabit değil: **aynı anda aynı şarkıyı dinleyenler** 10 saniyede bir birikir. Bir dakikanın sonunda 6 kişi kaydırılabilir
 - **Eşleşme** — beğendiğin kişi yeterince yakın zevkteyse karşılık verir ve kutlama ekranı açılır
 - **Sohbet** — metin mesajı ve şarkı gönderme; gönderilen şarkı baloncuğun içinden çalınır
 - **Müzik** — popüler şarkılar kare kapak ızgarasında, her birinin üstünde o şarkı üzerinden kaç kişiyle eşleşebileceğin
 - **Şarkı önerileri** — zevkine en yakın kişilerin dinlediği, senin listende olmayan şarkılar
 - **Sosyal akış** — şarkılar hakkında gönderi yaz, başkalarınınkini beğen ve yorumla
-- **Anlık eşleşme panosu** — radarı aç, 10 saniyede bir aynı şarkıdaki biri panoya düşsün; sağa kaydır beğen, sola kaydır geç
 - **Yapay zeka şarkısı** — sohbette eşleşmeniz için şarkı üret; aşamalı ilerleme, iptal edilebilir
 - **Platinum** — paket karşılaştırması ve yükseltme ekranı (ödeme alınmaz)
 - **Ayarlar** — bağlı hesap, engellenen kişiler, hesap verilerini silme
@@ -103,25 +102,31 @@ Ham örtüşme yakın zevklerde bile ~0.7'yi geçmediği için sonuç 42–99 ba
 - **Popüler şarkılar** — her şarkıyı kaç kişinin en çok dinlediklerinde taşıdığını sayar. Tek dinleyicili şarkılar elenir (`minListeners: 2`), çünkü "popüler" başlığı altında çıkmaz sokak listelemek başlığı anlamsız kılar. İlk 12 gösterilir.
 - **Öneriler** — senin listende olmayan şarkılar, onları dinleyen kişilerin uyum skorlarının toplamına göre sıralanır. Bir öneri, geldiği kişi kadar iyidir; bu yüzden ölçüt kişi sayısı değil, uyumların toplamı.
 
-## Anlık eşleşme panosu
+## Eşleşme: aynı şarkı, aynı an
 
-`/anlik` sayfası, radar açıkken 10 saniyede bir (`LIVE_BOARD_INTERVAL_MS`) panoya bir kişi ekler. İlk kart beklemeden düşer; sonrakiler ritme uyar. Şarkı değişince pano sıfırlanır — eski kartlar eski şarkıyla ilgiliydi.
+Keşfet sabit bir listeyi sıralamaz. Radar açıkken (`LIVE_BOARD_INTERVAL_MS`, 10 sn) senin **o an çaldığın şarkıyı** dinleyen biri desteye eklenir.
 
-Adaylar `src/lib/liveBoard.ts` içinde üç kademede sıralanır ve her kart hangi kademeden geldiğini yazar:
+İlk kart sıfırıncı saniyede değil, bir tam aralık sonra düşer. Yoksa bir dakikanın sonunda yedi kart olurdu; böyle **tam altı** oluyor:
 
-| Kademe | Etiket |
+| Süre | Destedeki kişi |
 |---|---|
-| Şarkı, kişinin en çok dinlediklerinde | şu an aynı şarkıda |
-| Şarkının sanatçısı listesinde | aynı sanatçıyı dinliyor |
-| Sanatçının türlerinden biri ortak | aynı türde takılıyor |
+| 0 sn | 0 |
+| 10 sn | 1 |
+| 30 sn | 3 |
+| 60 sn | **6** |
 
-Yalnız birinci kademeyi kullanmak panoyu yirmi saniyede kurutuyordu — herhangi bir şarkı en fazla iki üç kişinin listesinde. Alt kademeler panoyu canlı tutuyor; kart üstündeki etiket de hangisinin geçerli olduğunu saklamıyor.
+Sayaç ve ilerleme çubuğu bir sonrakine kaç saniye kaldığını gösterir; ritim tahmin edilmek zorunda kalmaz.
 
-### Kaydırma
+### Dinleyici nereden geliyor
 
-`src/components/SwipeCard.tsx` pointer olaylarıyla çalışır, hem panoda hem Keşfet destesinde kullanılır. 110 px'i geçen yatay sürükleme kararı verir, altında kalan yayla geri döner. Sürükleme yönüne göre "BEĞEN" / "GEÇ" katmanı belirir, kart açıyla döner.
+`src/lib/presence.ts` bir **canlı dinleme akışı** taklit eder. Kritik nokta: kimin destede olacağı, kişilerin "en çok dinledikleri" listesinden türetilemez — herhangi bir şarkı kadroda en fazla iki üç kişide bulunur ve öyle kurulmuş bir deste yirmi saniyede kurur.
 
-İlk 8 px'te eksen kilitlenir: yatay ise kaydırma, dikey ise sayfa kaydırması olarak devam eder (`touch-action: pan-y`) — yoksa telefonda sayfayı aşağı kaydırmak imkânsız hale geliyordu. `prefers-reduced-motion` açıksa uçuş animasyonu atlanır, karar anında uygulanır. Düğmeler de duruyor; kaydırma tek yol değil.
+Bunun yerine, gerçek bir presence servisinin döndüreceği şey modellenir: zamanla insanlar o şarkıyı açar. Herkes açabilir, tıpkı herkesin play'e basabileceği gibi. Zevk yalnızca **sırayı** belirler — şarkıyı zaten seven biri, türe hiç dokunmamış birinden daha olası bir sonraki dinleyicidir. Sıralama şarkı başına deterministiktir, ekrandan çıkıp dönmek kimin "zaten dinliyor" olduğunu yeniden karmaz.
+
+Kart üstündeki "az önce başladı / 3 dk önce başladı" bu simülasyondan gelir.
+
+Kadro 26 kişiye çıkarıldı; 10 kişilik havuz bu ritmi bir dakikadan fazla besleyemiyordu.
+
 
 ## Profil fotoğrafı
 
