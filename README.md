@@ -235,9 +235,27 @@ cp .env.example .env      # değerleri doldur
 npm install
 ```
 
-**Spotify:** [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard) → uygulama oluştur → redirect URI'yi Supabase'in verdiği callback adresi yap → Client ID ve Secret'ı Supabase'e gir.
+Sıra önemli: Supabase projesi olmadan Spotify'a hangi redirect URI'yi kaydedeceğin belli olmaz.
 
-**Supabase:** proje oluştur → Authentication > Providers > Spotify'ı aç → SQL Editor'de `supabase/migrations/` altındaki dosyaları sırayla çalıştır.
+**1. Supabase projesi.** [supabase.com](https://supabase.com) → yeni proje. Project Settings > API'den `URL` ve `anon public` anahtarını `.env`'e yaz. Proje referansın (`abcdefgh` gibi) bir sonraki adımda lazım.
+
+**2. Spotify uygulaması.** [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard) → Create app. Redirect URI olarak **Supabase'in callback adresini** gir, kendi uygulamanınkini değil:
+
+```
+https://<proje-ref>.supabase.co/auth/v1/callback
+```
+
+Client ID ve Client Secret'ı kopyala. Secret **uygulamaya girmez** — token takası Supabase tarafında olur.
+
+**3. Sağlayıcıyı bağla.** Supabase > Authentication > Providers > Spotify'ı aç, Client ID ve Secret'ı yapıştır.
+
+**4. Dönüş adresleri.** Supabase > Authentication > URL Configuration → Site URL ve Redirect URLs'e uygulamanın adresini ekle (`http://localhost:5173`, sonra üretim adresin).
+
+**5. Şema.** SQL Editor'de `supabase/migrations/` altındaki üç dosyayı sırayla çalıştır.
+
+İstenen izinler `src/services/spotify.ts` içindeki `SPOTIFY_SCOPES` listesinde durur: `user-read-email`, `user-read-private`, `user-top-read`, `user-read-currently-playing`, `user-read-playback-state`.
+
+> Spotify uygulaman "Development mode"dayken yalnızca dashboard'da tek tek eklediğin hesaplar giriş yapabilir. Kendi hesabın dahil — test edecek herkesi User Management'a eklemen gerekir.
 
 ## Şema
 
