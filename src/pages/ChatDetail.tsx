@@ -7,13 +7,144 @@ import { formatDuration, track, trackArtistName } from '@/data/catalog'
 import { compatibility } from '@/lib/match'
 import { useSocial } from '@/state/SocialContext'
 import { usePlayer } from '@/state/PlayerContext'
-import { useMe } from '@/state/AuthContext'
+import { useAuth, useMe } from '@/state/AuthContext'
 import { generateSongFor, type GenerationStage } from '@/services/aiSong'
 import type { GeneratedTrack } from '@/state/SocialContext'
+import {
+  listMatches,
+  listMessages,
+  sendMessage as sendRealMessage,
+  subscribeToMessages,
+  unsubscribe,
+  type ChatMessage,
+} from '@/services/db'
 
 const TIME = new Intl.DateTimeFormat('tr-TR', { hour: '2-digit', minute: '2-digit' })
 
 export function ChatDetail() {
+  const { authMode } = useAuth()
+  if (authMode === 'manual') return <RealChatDetail />
+  return <MockChatDetail />
+}
+
+/**
+ * Text-only real chat, backed by Supabase Realtime. Deliberately smaller
+ * than the mock thread below — no AI song generation, no track sharing — to
+ * keep the loop (match → see it → talk) provably correct before growing it.
+ */
+function RealChatDetail() {
+  // The route param is still named :personId (shared with the mock thread
+  // below); for a manual account it holds the real Supabase match id.
+  const { personId: matchId = '' } = useParams()
+  const { authUserId } = useAuth()
+  const [otherName, setOtherName] = useState<string | null>(null)
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [draft, setDraft] = useState('')
+  const [loaded, setLoaded] = useState(false)
+  const endRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!authUserId) return
+    let cancelled = false
+
+    void Promise.all([listMatches(authUserId), listMessages(matchId)]).then(([matches, msgs]) => {
+      if (cancelled) return
+      setOtherName(matches.find((m) => m.id === matchId)?.otherName ?? null)
+      setMessages(msgs)
+      setLoaded(true)
+    })
+
+    const channel = subscribeToMessages(matchId, (message) => {
+      setMessages((current) => [...current, message])
+    })
+
+    return () => {
+      cancelled = true
+      void unsubscribe(channel)
+    }
+  }, [authUserId, matchId])
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ block: 'end' })
+  }, [messages.length])
+
+  if (loaded && !otherName) {
+    return (
+      <div className="rounded-2xl border border-border bg-card p-8 text-center">
+        <p className="font-display text-lg">Bu sohbet açık değil</p>
+        <Link
+          to="/sohbetler"
+          className="mt-4 inline-block rounded-xl bg-muted px-4 py-2.5 text-sm font-medium transition-colors duration-200 hover:bg-muted/70"
+        >
+          Sohbetlere dön
+        </Link>
+      </div>
+    )
+  }
+
+  const submit = () => {
+    if (!authUserId || !draft.trim()) return
+    void sendRealMessage({ matchId, senderId: authUserId, body: draft.trim() })
+    setDraft('')
+  }
+
+  return (
+    <div className="flex min-h-[calc(100dvh-11.5rem)] flex-col md:min-h-[calc(100dvh-9.5rem)]">
+      <div className="flex items-center gap-3 border-b border-border pb-4">
+        <Link
+          to="/sohbetler"
+          aria-label="Sohbetlere dön"
+          className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors duration-200 hover:bg-muted"
+        >
+          <ArrowLeft className="size-5" aria-hidden="true" />
+        </Link>
+        <Avatar seed={matchId} name={otherName ?? '?'} />
+        <p className="truncate font-display text-lg">{otherName ?? 'Yükleniyor…'}</p>
+      </div>
+
+      <div className="flex-1 space-y-2 overflow-y-auto py-4">
+        {messages.map((m) => (
+          <div key={m.id} className={`flex ${m.senderId === authUserId ? 'justify-end' : 'justify-start'}`}>
+            <div
+              className={`max-w-[75%] rounded-2xl px-3.5 py-2 text-sm text-resilient ${
+                m.senderId === authUserId ? 'bg-accent text-on-accent' : 'bg-muted'
+              }`}
+            >
+              {m.body}
+              <span className="mt-0.5 block text-right text-[10px] opacity-70">
+                {TIME.format(new Date(m.createdAt))}
+              </span>
+            </div>
+          </div>
+        ))}
+        <div ref={endRef} />
+      </div>
+
+      <div className="flex items-center gap-2 border-t border-border pt-3">
+        <input
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') submit()
+          }}
+          placeholder="Bir mesaj yaz…"
+          className="min-w-0 flex-1 rounded-xl border border-border bg-transparent px-3.5 py-2.5 text-sm outline-none focus-visible:border-accent"
+        />
+        <button
+          type="button"
+          onClick={submit}
+          disabled={!draft.trim()}
+          aria-label="Gönder"
+          className="grid size-11 shrink-0 place-items-center rounded-full bg-accent text-on-accent transition-transform duration-200 hover:scale-105 active:scale-95 disabled:opacity-50"
+        >
+          <Send className="size-4" aria-hidden="true" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function MockChatDetail() {
   const { personId = '' } = useParams()
   const me = useMe()
   const { conversations, sendMessage, matchedIds } = useSocial()

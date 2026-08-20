@@ -5,6 +5,7 @@ import { Discover } from '@/pages/Discover'
 import { Music } from '@/pages/Music'
 import { Feed } from '@/pages/Feed'
 import { Login } from '@/pages/Login'
+import { Onboarding } from '@/pages/Onboarding'
 import { Platinum } from '@/pages/Platinum'
 import { RequireAuth } from '@/components/RequireAuth'
 import { Chats } from '@/pages/Chats'
@@ -18,6 +19,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Welcome />} />
       <Route path="/giris" element={<Login />} />
+      <Route path="/onboarding" element={<Onboarding />} />
       <Route element={<RequireAuth />}>
         <Route element={<AppShell />}>
           <Route path="/kesfet" element={<Discover />} />

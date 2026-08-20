@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Avatar } from '@/components/Avatar'
 import { PageHeader } from '@/components/PageHeader'
@@ -5,9 +6,70 @@ import { track, trackArtistName } from '@/data/catalog'
 import { person } from '@/data/people'
 import { compatibility } from '@/lib/match'
 import { useSocial } from '@/state/SocialContext'
-import { useMe } from '@/state/AuthContext'
+import { useAuth, useMe } from '@/state/AuthContext'
+import { listMatches, type Match } from '@/services/db'
 
 const RELATIVE = new Intl.RelativeTimeFormat('tr-TR', { numeric: 'auto' })
+
+/** Manual accounts' matches live in Supabase, not the mock SocialContext. */
+function RealChats() {
+  const { authUserId } = useAuth()
+  const [matches, setMatches] = useState<Match[] | null>(null)
+
+  useEffect(() => {
+    if (!authUserId) return
+    let cancelled = false
+    void listMatches(authUserId).then((list) => {
+      if (!cancelled) setMatches(list)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [authUserId])
+
+  if (matches === null) return <PageHeader title="Sohbetler" />
+
+  if (matches.length === 0) {
+    return (
+      <div>
+        <PageHeader title="Sohbetler" />
+        <div className="rounded-2xl border border-border bg-card p-8 text-center">
+          <p className="font-display text-lg">Henüz eşleşmen yok</p>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-balance text-muted-foreground">
+            Keşfet'te beğendiğin kişi seni de beğenirse sohbet burada başlar.
+          </p>
+          <Link
+            to="/kesfet"
+            className="mt-6 inline-block rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent transition-transform duration-200 hover:scale-[1.02] active:scale-95"
+          >
+            Keşfetmeye başla
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <PageHeader title="Sohbetler" subtitle={`${matches.length} eşleşme`} />
+      <ul className="space-y-1">
+        {matches.map((m) => (
+          <li key={m.id}>
+            <Link
+              to={`/sohbetler/${m.id}`}
+              className="flex items-center gap-3 rounded-2xl p-3 transition-colors duration-200 hover:bg-muted/60"
+            >
+              <Avatar seed={m.otherId} name={m.otherName} />
+              <span className="min-w-0 flex-1 truncate text-sm font-medium text-resilient">
+                {m.otherName}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
 
 function relativeTime(timestamp: number): string {
   const minutes = Math.round((timestamp - Date.now()) / 60_000)
@@ -18,6 +80,12 @@ function relativeTime(timestamp: number): string {
 }
 
 export function Chats() {
+  const { authMode } = useAuth()
+  if (authMode === 'manual') return <RealChats />
+  return <MockChats />
+}
+
+function MockChats() {
   const me = useMe()
   const { matchedIds, conversations } = useSocial()
 

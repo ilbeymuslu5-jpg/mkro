@@ -1,11 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
+import { GENRE_LABEL, type Genre } from '@/data/catalog'
 import type { Person } from '@/data/people'
 import { MOCK_ACCOUNTS } from '@/services/spotifyMock'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import {
-  getProfile,
+  getProfile as fetchSpotifyProfile,
   getTopArtists,
   getTopTracks,
   getNowPlaying,
@@ -14,9 +15,15 @@ import {
   type SpotifyProfile,
   type NowPlaying as RealNowPlaying,
 } from '@/services/spotify'
+import { getProfile as getDbProfile, getTaste, type Profile as DbProfile } from '@/services/db'
 import type { NowPlaying } from '@/services/spotifyMock'
 
 export type AuthStatus = 'anonymous' | 'authorizing' | 'loading' | 'authenticated' | 'error'
+/**
+ * Which door the current real session came through. `null` covers both the
+ * demo path and the anonymous state — neither has a Supabase session.
+ */
+export type AuthMode = 'spotify' | 'manual' | null
 
 interface AuthState {
   status: AuthStatus
@@ -32,6 +39,12 @@ interface AuthState {
   error: string | null
   /** True once a real Supabase session exists — separate from `me` being ready. */
   hasRealSession: boolean
+  /** Which door the current session came through. */
+  authMode: AuthMode
+  /** The real Supabase auth uid, for calls into services/db.ts. */
+  authUserId: string | null
+  /** True for a manual (email) session that has no `profiles` row yet. */
+  needsOnboarding: boolean
   /** The actual Spotify account, for display only. Never feeds the match engine. */
   spotifyProfile: SpotifyProfile | null
   /** What is really playing on Spotify right now, for display only. */
@@ -39,6 +52,11 @@ interface AuthState {
   login: () => Promise<void>
   /** Demo-mode sign-in, kept for when Supabase is not configured. */
   loginDemo: (accountId: string) => Promise<void>
+  /** Creates a real Supabase account with no Spotify Development Mode cap. */
+  signUpManual: (email: string, password: string) => Promise<{ error: string | null }>
+  signInManual: (email: string, password: string) => Promise<{ error: string | null }>
+  /** Re-reads the manual profile after onboarding writes it. */
+  refreshManualProfile: () => Promise<void>
   logout: () => void
   /** Drops the session and every local trace of it. */
   wipeAccount: () => void
@@ -94,6 +112,35 @@ function personFromDemoAccount(accountId: string): Person | null {
   }
 }
 
+const CURRENT_YEAR = new Date().getFullYear()
+
+/**
+ * Builds a Person from a manual (email) account's real `profiles` + taste
+ * rows. The ids in those rows are local catalog ids — Onboarding only ever
+ * lets a user pick from the catalog — so every screen that looks a track or
+ * artist up by id works exactly as it does for the demo accounts.
+ */
+function personFromManualProfile(
+  profile: DbProfile,
+  taste: Awaited<ReturnType<typeof getTaste>>,
+): Person {
+  const genres = Array.from(
+    new Set(taste.artists.flatMap((a) => a.genres.filter((g): g is Genre => g in GENRE_LABEL))),
+  )
+  return {
+    id: 'me',
+    name: profile.displayName,
+    age: profile.birthYear ? CURRENT_YEAR - profile.birthYear : 0,
+    city: profile.city ?? '',
+    bio: profile.bio,
+    topArtistIds: taste.artists.map((a) => a.id),
+    topTrackIds: taste.tracks.map((t) => t.id),
+    genres,
+    anthemTrackId: taste.tracks[0]?.id ?? '',
+    online: true,
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [me, setMe] = useState<Person | null>(null)
@@ -102,6 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [realNowPlaying, setRealNowPlaying] = useState<RealNowPlaying | null>(null)
   const [status, setStatus] = useState<AuthStatus>('anonymous')
   const [error, setError] = useState<string | null>(null)
+  const [needsOnboarding, setNeedsOnboarding] = useState(false)
   // Supabase persists a real session on its own; the demo path is handled
   // entirely by this component, so it needs its own storage or a page
   // reload (a full navigation, not a client-side route change) drops it and
@@ -162,7 +210,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setSpotifyProfile(null)
       setRealNowPlaying(null)
+      setNeedsOnboarding(false)
       return
+    }
+
+    // Supabase's email/password provider needs none of the Spotify-token
+    // machinery below — it reads its own profile out of `profiles` instead.
+    if (session.user.app_metadata?.provider !== 'spotify') {
+      setSpotifyProfile(null)
+      setRealNowPlaying(null)
+      let cancelled = false
+      setStatus('loading')
+
+      void (async () => {
+        try {
+          const profile = await getDbProfile(session.user.id)
+          if (cancelled) return
+          if (!profile) {
+            // Signed up, but the onboarding form (name/city/taste) was never
+            // submitted — there is no `profiles` row to build a Person from.
+            setMe(null)
+            setNeedsOnboarding(true)
+            setStatus('authenticated')
+            setError(null)
+            return
+          }
+          const taste = await getTaste(profile.id)
+          if (cancelled) return
+          setMe(personFromManualProfile(profile, taste))
+          setNeedsOnboarding(false)
+          setStatus('authenticated')
+          setError(null)
+        } catch {
+          if (cancelled) return
+          setError('Profilin yüklenemedi. Tekrar dene.')
+          setStatus('error')
+        }
+      })()
+
+      return () => {
+        cancelled = true
+      }
     }
 
     const token = session.provider_token
@@ -182,10 +270,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     void (async () => {
       try {
-        const profile = await getProfile(token)
+        const profile = await fetchSpotifyProfile(token)
         if (cancelled) return
         setSpotifyProfile(profile)
         setMe(personFromRealProfile(profile))
+        setNeedsOnboarding(false)
         setStatus('authenticated')
         setError(null)
 
@@ -229,17 +318,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [session, status])
 
   // The demo taste still drives the swipe deck — see DEMO_TASTE_ACCOUNT above.
-  // Real sign-ins always pin to DEMO_TASTE_ACCOUNT (there is no other account
-  // to pick from); a demo sign-in already set its own nowPlaying in
-  // loginDemo, so this only needs to cover the real-session path.
+  // Real Spotify sign-ins always pin to DEMO_TASTE_ACCOUNT (there is no other
+  // account to pick from); a demo sign-in already set its own nowPlaying in
+  // loginDemo, and a manual sign-in has its own real taste and no live
+  // playback to fake, so this only covers the real-Spotify-session path.
   useEffect(() => {
     if (status !== 'authenticated' || demoAccountId) return
+    if (session?.user.app_metadata?.provider !== 'spotify') return
     setNowPlaying({
       trackId: DEMO_TASTE_ACCOUNT.nowPlayingTrackId,
       isPlaying: true,
       progressMs: Date.now() % (4 * 60 * 1000),
     })
-  }, [status, demoAccountId])
+  }, [status, demoAccountId, session])
 
   const login = useCallback(async () => {
     if (!supabase) {
@@ -290,6 +381,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus('authenticated')
   }, [])
 
+  // Unlimited-user alternative to Spotify OAuth — Spotify's Development Mode
+  // caps a Client ID at 5 authorized accounts, which login() cannot get past.
+  // Email confirmation is off project-wide (see README), so signUp returns an
+  // active session immediately instead of requiring a confirmation click.
+  const signUpManual = useCallback(async (email: string, password: string) => {
+    if (!supabase) return { error: 'Supabase yapılandırılmamış.' }
+    setStatus('authorizing')
+    setError(null)
+    const { data, error: signUpError } = await supabase.auth.signUp({ email, password })
+    if (signUpError) {
+      setStatus('anonymous')
+      return { error: signUpError.message }
+    }
+    if (!data.session) {
+      setStatus('anonymous')
+      return { error: 'Hesap oluşturuldu ama oturum açılamadı. Giriş yapmayı dene.' }
+    }
+    setSession(data.session)
+    return { error: null }
+  }, [])
+
+  const signInManual = useCallback(async (email: string, password: string) => {
+    if (!supabase) return { error: 'Supabase yapılandırılmamış.' }
+    setStatus('authorizing')
+    setError(null)
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+    if (signInError) {
+      setStatus('anonymous')
+      return { error: 'E-posta veya şifre yanlış.' }
+    }
+    setSession(data.session)
+    return { error: null }
+  }, [])
+
+  const refreshManualProfile = useCallback(async () => {
+    if (!session) return
+    try {
+      const profile = await getDbProfile(session.user.id)
+      if (!profile) {
+        setNeedsOnboarding(true)
+        return
+      }
+      const taste = await getTaste(profile.id)
+      setMe(personFromManualProfile(profile, taste))
+      setNeedsOnboarding(false)
+      setStatus('authenticated')
+      setError(null)
+    } catch {
+      setError('Profilin yüklenemedi. Tekrar dene.')
+    }
+  }, [session])
+
   const clearSession = useCallback(() => {
     if (supabase) void supabase.auth.signOut()
     try {
@@ -303,6 +446,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setNowPlaying(null)
     setSpotifyProfile(null)
     setRealNowPlaying(null)
+    setNeedsOnboarding(false)
     setStatus('anonymous')
     setError(null)
   }, [])
@@ -318,6 +462,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearSession()
   }, [clearSession])
 
+  const authMode: AuthMode = session
+    ? session.user.app_metadata?.provider === 'spotify'
+      ? 'spotify'
+      : 'manual'
+    : null
+
   const value = useMemo<AuthState>(
     () => ({
       status,
@@ -325,10 +475,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       nowPlaying,
       error,
       hasRealSession: session !== null,
+      authMode,
+      authUserId: session?.user.id ?? null,
+      needsOnboarding,
       spotifyProfile,
       realNowPlaying,
       login,
       loginDemo,
+      signUpManual,
+      signInManual,
+      refreshManualProfile,
       logout: clearSession,
       wipeAccount,
     }),
@@ -338,10 +494,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       nowPlaying,
       error,
       session,
+      authMode,
+      needsOnboarding,
       spotifyProfile,
       realNowPlaying,
       login,
       loginDemo,
+      signUpManual,
+      signInManual,
+      refreshManualProfile,
       clearSession,
       wipeAccount,
     ],

@@ -293,19 +293,37 @@ Giriş Supabase Auth üzerinden yapılır (sağlayıcı: Spotify), çünkü RLS'
 
 `AuthContext` artık `.env` doluysa gerçek Spotify OAuth'u Supabase Auth üzerinden çalıştırır: "Spotify ile bağlan" butonu `supabase.auth.signInWithOAuth({ provider: 'spotify' })` açar, dönen oturumdan gerçek ad/e-posta/hesap türü (`spotifyProfile`) ve gerçek şu an çalan (`realNowPlaying`) çekilir. `.env` boşsa (veya Supabase kapalıysa) giriş ekranı otomatik olarak üç demo hesaptan birini seçmeye döner — bu davranış kasıtlı, gerçek anahtar olmadan uygulamayı denemeye devam edebilmek için.
 
-Bilinçli bir sınır var: gerçek girişte bile eşleştirme motorunu (keşif destesi, anlık eşleşme panosu, profildeki top sanatçı/şarkı listesi) hâlâ `spotifyMock.ts`'teki sabit demo zevk verisi besliyor, gerçek Spotify top listelerin değil. Sebep: `track()`/`artist()` (`src/data/catalog.ts`) yalnızca yerel katalogdaki id'leri tanıyor ve tanımadığı id'de patlıyor — gerçek Spotify id'lerini doğrudan vermek uygulamayı çökertir. Gerçek kimlik ve gerçek şu an çalan veri çekiliyor ve state'te duruyor ama şu an hiçbir ekranda gösterilmiyor. Bunu kapatmanın doğru yolu aşağıdaki 2. maddedir.
+Bilinçli bir sınır var: gerçek Spotify girişinde bile eşleştirme motorunu (canlı radar, profildeki top sanatçı/şarkı listesi) hâlâ `spotifyMock.ts`'teki sabit demo zevk verisi besliyor, gerçek Spotify top listelerin değil. Sebep: `track()`/`artist()` (`src/data/catalog.ts`) yalnızca yerel katalogdaki id'leri tanıyor ve tanımadığı id'de patlıyor — gerçek Spotify id'lerini doğrudan vermek uygulamayı çökertir. Gerçek kimlik ve gerçek şu an çalan veri çekiliyor ve state'te duruyor ama şu an hiçbir ekranda gösterilmiyor. Bunu kapatmanın doğru yolu aşağıdaki "Kalan iş" listesinin 2. maddesi.
+
+## E-posta ile giriş: Spotify'ın 5 kullanıcı sınırını aşan yol
+
+Spotify, Şubat 2026'dan itibaren Development Mode'u Client ID başına **5 yetkili kullanıcıyla** sınırladı (bkz. [developer.spotify.com/blog/2026-02-06-update-on-developer-access-and-platform-security](https://developer.spotify.com/blog/2026-02-06-update-on-developer-access-and-platform-security)), ve genişletilmiş erişim (Extended Quota Mode) artık yalnızca "kurumsal ölçekli, Spotify'ın kendi platform stratejisine hizmet eden" başvurulara veriliyor — başvuruların %95'inden fazlası reddediliyor. Yani tek kişilik bir proje için Spotify OAuth'u **kalıcı olarak en fazla 5 gerçek kullanıcıya** açık kalır.
+
+Bunu aşmak için `AuthContext`'e Spotify'dan tamamen bağımsız ikinci bir gerçek giriş yolu eklendi: **e-posta/şifre ile Supabase Auth**. Sınırsız kullanıcıya açık, hiçbir üçüncü tarafın onayına bağlı değil.
+
+- `src/pages/Login.tsx` — "E-posta ile devam et" bağlantısı, `isSupabaseConfigured()` iken Spotify butonunun altında görünür. Giriş/Kayıt sekmeleri, `signUpManual`/`signInManual` (AuthContext) çağırır.
+- `src/pages/Onboarding.tsx` — yeni bir e-posta hesabı ilk girişte buraya düşer (`needsOnboarding`). Ad/yaş/şehir/bio ve **en az 5 sanatçı** seçilir — seçilebilecek 30 sanatçı `src/data/catalog.ts`'ten geliyor, her biri tek bir şarkıyla eşleşiyor, böylece motoru besleyen id'ler hep yerel kataloğun tanıdığı id'ler oluyor ve `track()`/`artist()` asla patlamıyor.
+- Profil + seçilen zevk, mevcut (önceden hiç bağlanmamış) `services/db.ts` fonksiyonlarıyla gerçekten Supabase'e yazılıyor: `upsertProfile` + `updateProfile` + `syncTaste`.
+- `AuthContext`'in oturum efekti artık sağlayıcıya göre dallanıyor: `session.user.app_metadata.provider === 'spotify'` değilse Spotify token akışına hiç girmiyor, bunun yerine `getProfile`/`getTaste` (db.ts) ile gerçek profili okuyup `Person`'a çeviriyor (`personFromManualProfile`). Yeni `authMode: 'spotify' | 'manual' | null` ve `authUserId` alanları eklendi.
+
+**Bu hesaplar için Keşfet ve Sohbetler artık gerçek backend'e bağlı** — demo/Spotify hesaplarının aksine mock veri kullanmıyor:
+
+- `src/pages/Discover.tsx` — `authMode === 'manual'` ise canlı radar yerine `RealDiscover` render edilir: `discover_candidates` RPC'siyle (taste + mesafe skoru sunucu tarafında, bkz. `20250101000003_discovery.sql`) gerçek adaylar çekilir, kaydırma `swipe()` ile yazılır, karşılıklı beğeni sunucudaki trigger'la anında eşleşme satırı oluşturur — istemci bunu `listMatches` ile kontrol edip "eşleştiniz" banner'ı gösterir.
+- `src/pages/Chats.tsx` / `ChatDetail.tsx` — `authMode === 'manual'` için `RealChats`/`RealChatDetail`: gerçek `matches`/`messages` tablolarını okur, `subscribeToMessages` ile Realtime abone olur. Metin mesajıyla sınırlı — şarkı paylaşma ve AI şarkı üretme (mock sohbetteki özellikler) bu sürümde yok, kapsam kasıtlı olarak dar tutuldu.
+
+**Doğrulama notu:** bu sandbox'ın ağ politikası `*.supabase.co`'yu engellediği için gerçek bir e-posta kaydını uçtan uca (iki hesabın birbirini görüp eşleşmesi) burada test edemedim — yalnızca `tsc`/build temiz, ve ağ gerektirmeyen kısımlar (form açılışı, boş alan doğrulaması, oturumsuz `/onboarding` yönlendirmesi) Playwright ile doğrulandı. Gerçek iki-hesaplı eşleşme akışını Vercel'deki canlı sürümde test etmek gerekiyor.
 
 ## Kalan iş
 
 Arayüzün tamamı hâlâ `src/data/catalog.ts` üzerinden render ediyor — yerel id'ler (`t-11`), gerçek Spotify id'leri değil. Migrasyonun kalanı:
 
-1. ~~`AuthContext`'i Supabase Auth'a bağla~~ — yapıldı, yukarıya bak. `spotifyMock.ts` hâlâ duruyor çünkü motor ona bağlı.
+1. ~~`AuthContext`'i Supabase Auth'a bağla~~ — yapıldı, yukarıya bak. `spotifyMock.ts` hâlâ duruyor çünkü Spotify girişindeki motor ona bağlı (e-posta girişindeki motor artık gerçek — bkz. yukarıdaki bölüm).
 2. Bileşenleri id yerine veritabanındaki `track_name` / `artist_name` / `image_url` sütunlarıyla besle, `data/catalog.ts` ve `data/people.ts`'i kaldır — bu tamamlanınca gerçek Spotify top listeleri motoru besleyebilir ve `spotifyMock.ts` silinebilir
-3. `SocialContext` ve `FeedContext`'i `services/db.ts` çağrılarına çevir
-4. `ChatDetail`'e `subscribeToMessages` bağla
+3. ~~`SocialContext` ve `FeedContext`'i `services/db.ts` çağrılarına çevir~~ — yalnızca e-posta hesaplarının Keşfet/Sohbetler'i için yapıldı (`RealDiscover`/`RealChats`/`RealChatDetail`). `FeedContext` (Sosyal akış) ve demo/Spotify hesaplarının `SocialContext`'i hâlâ mock.
+4. ~~`ChatDetail`'e `subscribeToMessages` bağla~~ — yapıldı, yalnızca `RealChatDetail` için. Şarkı paylaşma ve AI şarkı üretimi bu sürümde yok.
 5. Konum izni akışı → `setLocation`, keşifte mesafe filtresi
 
-**Sosyal grafik uyarısı:** mock `PEOPLE` kaldırıldığında keşif destesi, pano ve öneriler boşalır. Gerçek kullanıcılar kaydolana kadar uygulama boş görünür; test için seed kullanıcı stratejisi gerekir.
+**Sosyal grafik uyarısı:** mock `PEOPLE` kaldırıldığında demo/Spotify hesapları için keşif destesi, pano ve öneriler boşalır. E-posta hesapları zaten gerçek veriyle çalışıyor ama gerçek kullanıcı sayısı azken keşfet boş görünebilir — test için birkaç hesap kaydolman gerekir.
 
 ---
 

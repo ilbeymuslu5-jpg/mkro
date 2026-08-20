@@ -9,7 +9,7 @@ import { useAuth } from '@/state/AuthContext'
  * behind it can treat the user as always present.
  */
 export function RequireAuth() {
-  const { status, me } = useAuth()
+  const { status, me, needsOnboarding } = useAuth()
   const location = useLocation()
 
   if (status === 'loading' || status === 'authorizing') {
@@ -25,6 +25,10 @@ export function RequireAuth() {
       </div>
     )
   }
+
+  // Signed up (real Supabase session) but the profile/taste form was never
+  // submitted — there is no `me` to render any of these screens with.
+  if (needsOnboarding) return <Navigate to="/onboarding" replace />
 
   if (!me) return <Navigate to="/giris" replace state={{ from: location.pathname }} />
 
