@@ -279,21 +279,28 @@ Mesafe filtresi `max_distance_km` null ise "her yer" demektir. Konumu olmayan pr
 | Dosya | Durum |
 |---|---|
 | `src/services/spotify.ts` | **Gerçek.** api.spotify.com'a `fetch`; profil, top artists, top tracks, şu an çalan. 204, 401 ve 429 ayrı ayrı ele alınıyor. |
-| `src/services/db.ts` | **Gerçek.** Tüm CRUD, Realtime abonelikleri, konum, engelleme, şikayet. |
+| `src/state/AuthContext.tsx` | **Gerçek giriş, katmanlı veri.** `.env` doluysa `supabase.auth.signInWithOAuth({ provider: 'spotify' })` çalışır, gerçek Spotify kimliği (`spotifyProfile`) ve şu an çalanı (`realNowPlaying`) çeker. `.env` boşsa giriş ekranı otomatik demo hesap seçiciye döner. Bkz. "Gerçek giriş, simüle motor" altta. |
+| `src/services/db.ts` | **Gerçek, henüz bağlanmadı.** Tüm CRUD, Realtime abonelikleri, konum, engelleme, şikayet yazılı; `SocialContext`/`FeedContext` hâlâ bunu değil bellek içi mock state'i kullanıyor. |
 | `src/lib/supabase.ts` | İstemci. Ortam değişkenleri yoksa `null` — çağıranlar bunu ele almak zorunda. |
 | `src/components/ReportDialog.tsx` | **Bağlı.** Kişi profilinde "Şikayet et". |
-| `src/services/spotifyMock.ts` | **Geçici.** Arayüzü ayakta tutuyor, migrasyon bitince silinecek. |
+| `src/services/spotifyMock.ts` | **Hâlâ aktif kullanımda.** Artık "sahte API" değil — üç demo hesabın (gecekusu/45lik/nokta.vurus) zevk verisini tutuyor; hem demo girişte hem gerçek Spotify girişinde eşleştirme motorunu bu besliyor. |
 
 ### Spotify token'ının bir saatlik sınırı
 
 Giriş Supabase Auth üzerinden yapılır (sağlayıcı: Spotify), çünkü RLS'in `auth.uid()`'e ihtiyacı var. Dönen `provider_token` ile Web API çağrılır. Bu token tarayıcıda yenilenemez — yenileme client secret ister. Bir saat sonra `SpotifyAuthExpired` fırlar ve kullanıcıdan yeniden bağlanması istenir. Üretim çözümü: secret'ı tutan bir Supabase Edge Function; uygulamanın geri kalanında hiçbir şey değişmez.
 
+## Gerçek giriş, simüle motor
+
+`AuthContext` artık `.env` doluysa gerçek Spotify OAuth'u Supabase Auth üzerinden çalıştırır: "Spotify ile bağlan" butonu `supabase.auth.signInWithOAuth({ provider: 'spotify' })` açar, dönen oturumdan gerçek ad/e-posta/hesap türü (`spotifyProfile`) ve gerçek şu an çalan (`realNowPlaying`) çekilir. `.env` boşsa (veya Supabase kapalıysa) giriş ekranı otomatik olarak üç demo hesaptan birini seçmeye döner — bu davranış kasıtlı, gerçek anahtar olmadan uygulamayı denemeye devam edebilmek için.
+
+Bilinçli bir sınır var: gerçek girişte bile eşleştirme motorunu (keşif destesi, anlık eşleşme panosu, profildeki top sanatçı/şarkı listesi) hâlâ `spotifyMock.ts`'teki sabit demo zevk verisi besliyor, gerçek Spotify top listelerin değil. Sebep: `track()`/`artist()` (`src/data/catalog.ts`) yalnızca yerel katalogdaki id'leri tanıyor ve tanımadığı id'de patlıyor — gerçek Spotify id'lerini doğrudan vermek uygulamayı çökertir. Gerçek kimlik ve gerçek şu an çalan veri çekiliyor ve state'te duruyor ama şu an hiçbir ekranda gösterilmiyor. Bunu kapatmanın doğru yolu aşağıdaki 2. maddedir.
+
 ## Kalan iş
 
 Arayüzün tamamı hâlâ `src/data/catalog.ts` üzerinden render ediyor — yerel id'ler (`t-11`), gerçek Spotify id'leri değil. Migrasyonun kalanı:
 
-1. `AuthContext`'i Supabase Auth'a bağla, `spotifyMock.ts`'i sil
-2. Bileşenleri id yerine veritabanındaki `track_name` / `artist_name` / `image_url` sütunlarıyla besle, `data/catalog.ts` ve `data/people.ts`'i kaldır
+1. ~~`AuthContext`'i Supabase Auth'a bağla~~ — yapıldı, yukarıya bak. `spotifyMock.ts` hâlâ duruyor çünkü motor ona bağlı.
+2. Bileşenleri id yerine veritabanındaki `track_name` / `artist_name` / `image_url` sütunlarıyla besle, `data/catalog.ts` ve `data/people.ts`'i kaldır — bu tamamlanınca gerçek Spotify top listeleri motoru besleyebilir ve `spotifyMock.ts` silinebilir
 3. `SocialContext` ve `FeedContext`'i `services/db.ts` çağrılarına çevir
 4. `ChatDetail`'e `subscribeToMessages` bağla
 5. Konum izni akışı → `setLocation`, keşifte mesafe filtresi

@@ -94,7 +94,8 @@ for (const [width, tag] of [
   })
 
   await page.goto('http://localhost:5173/giris', { waitUntil: 'networkidle' })
-  await page.getByRole('button', { name: /İzin ver/ }).click()
+  await page.getByRole('button', { name: /nokta\.vurus/ }).click()
+  await page.getByRole('button', { name: 'Demo hesapla devam et' }).click()
   await page.waitForURL('**/kesfet', { timeout: 20000 })
 
   for (const [name, path] of ROUTES) {

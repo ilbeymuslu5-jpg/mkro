@@ -13,7 +13,7 @@ export { isSupabaseConfigured }
  */
 export const supabase: SupabaseClient | null = isSupabaseConfigured()
   ? createClient(URL, ANON_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
     })
   : null
 

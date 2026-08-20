@@ -12,7 +12,7 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ open, onClose }: SettingsModalProps) {
-  const { session, logout, wipeAccount } = useAuth()
+  const { spotifyProfile, hasRealSession, logout, wipeAccount } = useAuth()
   const { clearPhoto } = useProfile()
   const { blockedIds, unblock, resetAll } = useSocial()
   const [confirmingWipe, setConfirmingWipe] = useState(false)
@@ -71,11 +71,14 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
             </h3>
             <div className="mt-2 rounded-xl bg-muted/50 p-3">
               <p className="truncate text-sm font-medium text-resilient">
-                {session?.profile.displayName ?? '—'}
+                {spotifyProfile?.displayName ?? (hasRealSession ? '—' : 'Demo hesap')}
               </p>
               <p className="truncate text-xs text-muted-foreground text-resilient">
-                {session?.profile.email ?? '—'} ·{' '}
-                {session?.profile.product === 'premium' ? 'Spotify Premium' : 'Spotify Free'}
+                {spotifyProfile
+                  ? `${spotifyProfile.email ?? '—'} · ${
+                      spotifyProfile.product === 'premium' ? 'Spotify Premium' : 'Spotify Free'
+                    }`
+                  : 'Gerçek Spotify verisi bu oturumda yok'}
               </p>
             </div>
           </section>
