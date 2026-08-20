@@ -251,7 +251,14 @@ Client ID ve Client Secret'ı kopyala. Secret **uygulamaya girmez** — token ta
 
 **4. Dönüş adresleri.** Supabase > Authentication > URL Configuration → Site URL ve Redirect URLs'e uygulamanın adresini ekle (`http://localhost:5173`, sonra üretim adresin).
 
-**5. Şema.** SQL Editor'de `supabase/migrations/` altındaki üç dosyayı sırayla çalıştır.
+**5. Şema.** SQL Editor'de `supabase/migrations/` altındaki üç dosyayı **isim sırasıyla** çalıştır. Ya da Supabase CLI ile:
+
+```bash
+npx supabase link --project-ref <proje-ref>
+npx supabase db push
+```
+
+Dosya adları Supabase'in beklediği `<zaman-damgası>_ad.sql` biçiminde; CLI ve GitHub entegrasyonu bu biçime göre sıralar.
 
 İstenen izinler `src/services/spotify.ts` içindeki `SPOTIFY_SCOPES` listesinde durur: `user-read-email`, `user-read-private`, `user-top-read`, `user-read-currently-playing`, `user-read-playback-state`.
 
@@ -261,9 +268,9 @@ Client ID ve Client Secret'ı kopyala. Secret **uygulamaya girmez** — token ta
 
 | Dosya | İçerik |
 |---|---|
-| `0001_init.sql` | Tablolar: profiles (PostGIS konum), top_artists, top_tracks, now_playing, swipes, matches, posts, post_likes, post_comments, messages, blocks, reports. Karşılıklı beğeniyi eşleşmeye çeviren trigger. Realtime yayını. |
-| `0002_rls.sql` | Row level security. Engelleme iki yönlü çalışır: taraflardan biri engellediyse ikisi de diğerinin satırlarını göremez. Kimin seni beğendiği görünmez — sadece eşleşme satırı görünür. |
-| `0003_discovery.sql` | `taste_score` (istemcideki `match.ts` ile aynı formül), `discover_candidates` (zevk + mesafe tek sorguda), `listening_now` (aynı şarkı + tazelik penceresi), `set_my_location`. |
+| `20250101000001_init.sql` | Tablolar: profiles (PostGIS konum), top_artists, top_tracks, now_playing, swipes, matches, posts, post_likes, post_comments, messages, blocks, reports. Karşılıklı beğeniyi eşleşmeye çeviren trigger. Realtime yayını. |
+| `20250101000002_rls.sql` | Row level security. Engelleme iki yönlü çalışır: taraflardan biri engellediyse ikisi de diğerinin satırlarını göremez. Kimin seni beğendiği görünmez — sadece eşleşme satırı görünür. |
+| `20250101000003_discovery.sql` | `taste_score` (istemcideki `match.ts` ile aynı formül), `discover_candidates` (zevk + mesafe tek sorguda), `listening_now` (aynı şarkı + tazelik penceresi), `set_my_location`. |
 
 Mesafe filtresi `max_distance_km` null ise "her yer" demektir. Konumu olmayan profiller **yalnızca** o durumda listeye girer — konumu bilinmeyen birine mesafe filtresi uygulamak dürüst olmaz.
 
