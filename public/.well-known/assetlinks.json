@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.makromusic.twa",
+      "sha256_cert_fingerprints": [
+        "2B:F4:06:6D:D9:58:A4:7A:F8:20:09:C4:CF:34:8F:31:89:43:83:E2:92:C1:62:99:5E:47:7C:11:43:F6:84:37"
+      ]
+    }
+  }
+]

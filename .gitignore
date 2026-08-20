@@ -28,3 +28,13 @@ artifact
 # Local secrets
 .env
 .env.local
+
+# Android release signing key — losing this means the app can never be
+# updated on Play Store again under the same package; back it up somewhere
+# safe outside git, never commit it.
+android-signing/
+*.keystore
+*.jks
+
+# Generated TWA/Capacitor Android project (built on your own machine, not here)
+android/

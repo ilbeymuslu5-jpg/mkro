@@ -306,3 +306,64 @@ Arayüzün tamamı hâlâ `src/data/catalog.ts` üzerinden render ediyor — yer
 5. Konum izni akışı → `setLocation`, keşifte mesafe filtresi
 
 **Sosyal grafik uyarısı:** mock `PEOPLE` kaldırıldığında keşif destesi, pano ve öneriler boşalır. Gerçek kullanıcılar kaydolana kadar uygulama boş görünür; test için seed kullanıcı stratejisi gerekir.
+
+---
+
+# Play Store'a giden yol
+
+Uygulama artık kurulabilir bir PWA (`vite-plugin-pwa`: manifest, ikonlar, service worker) ama şu an hiçbir yerde barındırılmıyor — `npm run dev` dışında canlı bir adresi yok. Google Play'e girmenin en gerçekçi yolu **TWA (Trusted Web Activity)**: Play Store'un PWA'lar için resmi paketleme yöntemi. Uygulamayı yeniden yazmaz, Chrome'u tam ekran açar; Spotify OAuth'u normal web akışıyla aynı şekilde çalışır, ayrı bir "deep link" kurulumu gerekmez.
+
+## Şu ana kadar hazırlanan
+
+- `vite-plugin-pwa` kuruldu: `manifest.webmanifest`, `sw.js`, ikonlar (`icon-192.png`, `icon-512.png`, `maskable-512.png`, `apple-touch-icon.png`) `public/`'ta üretildi
+- `vercel.json` — SPA rewrite kuralı, Vercel'in `build`/`dist` çıktısını doğru servis etmesi için
+- Android imzalama anahtarı üretildi (`keytool`, JDK'yla) ve SHA-256 parmak izi çıkarıldı
+- `public/.well-known/assetlinks.json` — TWA'nın domain sahipliğini doğrulaması için, parmak izi zaten içine yazıldı
+
+## Neden burada bitmiyor
+
+Bu sandbox'ın ağ politikası `dl.google.com`'u engelliyor (403) — Android SDK/build-tools'u yalnızca oradan indirilebiliyor, dolayısıyla Bubblewrap'i (TWA proje üreticisi) burada çalıştıramıyorum. Kalan adımlar senin kendi bilgisayarında (kısıtsız internet ile) yapılmalı — Supabase CLI'ı nasıl kurup çalıştırdıysak aynı mantık.
+
+## Sırada ne var (senin bilgisayarında)
+
+**1. Vercel'e deploy et.** [vercel.com](https://vercel.com) → projeni GitHub'daki `mkro` reposuna bağla (zaten bir proje oluşturmuştun). Ayarlar aynen `vercel.json`'daki gibi otomatik algılanır. **Environment Variables** kısmına `.env`'deki iki değeri ekle:
+
+```
+VITE_SUPABASE_URL=https://spoamrffahjexbxfgugk.supabase.co
+VITE_SUPABASE_ANON_KEY=sb_publishable_iVx_sJhmV1F1AjFn_5NAHQ_WNRfwEmF
+```
+
+Deploy bitince sana bir adres verecek (`https://mkro-xxxx.vercel.app` gibi, ya da kendi domainini bağlarsan onu).
+
+**2. Supabase ve Spotify'a bu yeni adresi tanıt.**
+- Supabase → Authentication → URL Configuration → Redirect URLs'e ekle: `https://<vercel-adresin>`
+- Spotify dashboard'daki redirect URI hâlâ Supabase'in callback'i olduğu için (`https://spoamrffahjexbxfgugk.supabase.co/auth/v1/callback`) bu adımda değişiklik gerekmiyor
+
+**3. Bubblewrap'i kendi makinende çalıştır.**
+
+```bash
+npm install -g @bubblewrap/cli
+bubblewrap init --manifest https://<vercel-adresin>/manifest.webmanifest
+```
+
+Sorular geldiğinde: JDK/Android SDK'yı kendi indirsin ("Yes" de, kendi internetin engellemiyor). Paket adı olarak `app.makromusic.twa` gir — `assetlinks.json`'a zaten bu adı yazdım, farklı bir isim girersen dosyayı da güncellemen gerekir.
+
+**4. İmzalama anahtarını kullan.** Bu konuşmada sana ayrıca gönderdiğim `makromusic-release.keystore` dosyasını indir, `bubblewrap` sana keystore sorduğunda o dosyayı göster (parola: mesajda ayrıca yazdım). **Bu dosyayı kaybetme** — kaybedersen aynı uygulamayı bir daha güncelleyemezsin, Play Store'da yepyeni bir uygulama olarak baştan yayınlaman gerekir.
+
+**5. Derle.**
+
+```bash
+bubblewrap build
+```
+
+Bu sana bir `.aab` (Android App Bundle) dosyası verir — Play Console'a yüklenecek dosya budur.
+
+**6. `assetlinks.json`'ı doğrula.** Deploy ettikten sonra `https://<vercel-adresin>/.well-known/assetlinks.json` adresinin açıldığını kontrol et — TWA bunu göremezse Chrome'un adres çubuğunu gösterir (tam ekran olmaz).
+
+## Play Console tarafı (yalnızca sen yapabilirsin)
+
+- [play.google.com/console](https://play.google.com/console) → Developer hesabı aç (~$25, tek seferlik)
+- Yeni uygulama oluştur, `.aab` dosyasını yükle
+- Gizlilik politikası metni gerekiyor (istersen taslağını ben yazarım)
+- İçerik derecelendirmesi anketi — bu bir "sosyal/flört" uygulaması olduğu için Google'ın ek güvenlik/moderasyon soruları çıkabilir
+- **Spotify tarafı:** uygulaman "Development mode"da kaldığı sürece yalnızca senin Spotify dashboard'una tek tek eklediğin test kullanıcıları giriş yapabilir. Herkese açık olması için Spotify'a "Extended Quota Mode" başvurusu yapman lazım (Spotify for Developers → App → Extend quota) — kullanım amacını açıklayan bir form dolduruyorsun, onay süresi Spotify'a bağlı
